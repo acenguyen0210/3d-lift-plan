@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 chcp 65001 >nul
 title Tự động Commit và Push GitHub - 3D Lift Plan
 color 0B
