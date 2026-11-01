@@ -21,7 +21,8 @@ import {
   MousePointerClick,
   MapPin,
   RotateCw,
-  Video
+  Video,
+  ChevronDown
 } from 'lucide-react';
 import WheelNumberInput from './WheelNumberInput';
 
@@ -107,6 +108,7 @@ export default function ThreeViewport({
   }, [crane, boomLength, setBoomLength, setWorkingRadius, setSlewAngle, craneHeading, setLoadElevation, loadRotation, loadConfig, riggingConfig]);
 
   const [activeCameraView, setActiveCameraView] = useState('3d'); // '3d', 'top', 'side', 'cab', 'load'
+  const [isCameraMenuOpen, setIsCameraMenuOpen] = useState(false);
   const [isGizmoActive, setIsGizmoActive] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
   const [showClearance, setShowClearance] = useState(true);
@@ -394,16 +396,25 @@ export default function ThreeViewport({
       }
     });
 
-    // 10. Resize Handler
+    // 10. Resize Handler (Window resize + Container ResizeObserver)
     const handleResize = () => {
       if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
       const w = containerRef.current.clientWidth;
       const h = containerRef.current.clientHeight;
+      if (w <= 0 || h <= 0) return;
       cameraRef.current.aspect = w / h;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(w, h);
     };
     window.addEventListener('resize', handleResize);
+
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined' && container) {
+      resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+      resizeObserver.observe(container);
+    }
 
     // 11. Animation Loop
     const animate = () => {
@@ -417,6 +428,7 @@ export default function ThreeViewport({
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      if (resizeObserver) resizeObserver.disconnect();
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (tc) tc.dispose();
       if (obsBuilder) obsBuilder.clear();
@@ -1043,6 +1055,7 @@ export default function ThreeViewport({
       {/* 3D Canvas Container */}
       <div
         ref={containerRef}
+        style={{ touchAction: 'none' }}
         className={`w-full flex-1 relative ${
           pickingFencePoint ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'
         }`}
@@ -1050,87 +1063,80 @@ export default function ThreeViewport({
 
       {/* Active Mouse Picking Mode Banner */}
       {pickingFencePoint && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-cyan-950/95 border-2 border-cyan-400 text-cyan-100 px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-3.5 z-40 pointer-events-auto backdrop-blur-md animate-pulse">
-          <div className="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center shrink-0 text-cyan-300">
-            <MousePointerClick size={18} />
+        <div className="absolute top-14 sm:top-16 left-1/2 -translate-x-1/2 bg-cyan-950/95 border-2 border-cyan-400 text-cyan-100 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 sm:gap-3.5 z-40 pointer-events-auto backdrop-blur-md animate-pulse max-w-[95%]">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center shrink-0 text-cyan-300">
+            <MousePointerClick size={16} />
           </div>
-          <div className="text-xs">
-            <div className="font-bold text-white uppercase tracking-wide flex items-center gap-2">
-              <span>
+          <div className="text-xs min-w-0">
+            <div className="font-bold text-white uppercase tracking-wide flex items-center gap-1.5 flex-wrap">
+              <span className="truncate">
                 {pickingFencePoint.mode === 'add'
-                  ? 'Chế độ Chấm Cọc Mốc Mới'
-                  : 'Chế độ Định Vị Cọc Mốc Chuột'}
+                  ? 'Chấm Cọc Mốc Mới'
+                  : 'Định Vị Cọc Mốc Chuột'}
               </span>
               {pickCoordText && (
-                <span className="bg-cyan-900 border border-cyan-500/60 text-cyan-300 font-mono text-[11px] px-2 py-0.5 rounded font-black">
+                <span className="bg-cyan-900 border border-cyan-500/60 text-cyan-300 font-mono text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded font-black">
                   {pickCoordText}
                 </span>
               )}
             </div>
-            <div className="text-cyan-200/90 text-[11px] mt-0.5">
-              Nhấp chuột vào bất kỳ vị trí nào trên mặt đất 3D để đặt mốc (Bắt dính lưới 0.5m). Phím Esc để hủy.
+            <div className="text-cyan-200/90 text-[10px] sm:text-[11px] mt-0.5 truncate hidden sm:block">
+              Nhấp chuột trên mặt đất 3D để đặt mốc (Bắt dính 0.5m). Phím Esc để hủy.
             </div>
           </div>
           <button
             onClick={() => setPickingFencePoint(null)}
-            className="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1 rounded-lg text-xs font-bold transition-colors shrink-0 shadow"
+            className="bg-cyan-600 hover:bg-cyan-500 text-white px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-colors shrink-0 shadow"
           >
-            Xong / Thoát
+            Xong
           </button>
         </div>
       )}
 
       {/* Top Overlay Bar: Status & Key Telemetry */}
-      <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none gap-2">
+      <div className="absolute top-2 sm:top-3 left-2 sm:left-3 right-2 sm:right-3 flex items-center justify-between pointer-events-none gap-1.5 sm:gap-2">
         {/* Crane & Model Tag */}
-        <div className="bg-slate-900/85 backdrop-blur-md px-3.5 py-2 rounded-lg border border-slate-700/80 shadow-lg flex items-center gap-3 pointer-events-auto">
-          <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: liftCategory.color }} />
-          <div>
-            <div className="text-xs font-semibold text-slate-200 tracking-wide">{crane?.name || 'Chưa chọn cẩu'}</div>
-            <div className="text-[11px] text-slate-400 font-mono">
-              Bán kính: <span className="text-sky-400 font-bold">{workingRadius.toFixed(1)}m</span> | Góc cần:{' '}
-              <span className="text-amber-400 font-bold">{boomAngle.toFixed(1)}°</span> | Cần:{' '}
+        <div className="bg-slate-900/90 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-2 rounded-lg border border-slate-700/80 shadow-lg flex items-center gap-2 sm:gap-3 pointer-events-auto min-w-0 max-w-[58%] sm:max-w-none">
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full animate-pulse shrink-0" style={{ backgroundColor: liftCategory.color }} />
+          <div className="min-w-0">
+            <div className="text-[11px] sm:text-xs font-semibold text-slate-200 tracking-wide truncate">{crane?.name || 'Chưa chọn cẩu'}</div>
+            <div className="text-[9px] sm:text-[11px] text-slate-400 font-mono truncate">
+              R: <span className="text-sky-400 font-bold">{workingRadius.toFixed(1)}m</span> | α:{' '}
+              <span className="text-amber-400 font-bold">{boomAngle.toFixed(1)}°</span> | L:{' '}
               <span className="text-emerald-400 font-bold">{boomLength.toFixed(1)}m</span>
             </div>
           </div>
         </div>
 
-        {/* Interactive Gizmo Active Hint */}
-        {isGizmoActive && (
-          <div className="bg-rose-950/90 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-rose-500 shadow-lg flex items-center gap-2 pointer-events-auto text-xs text-rose-200 animate-pulse hidden md:flex">
-            <Move3d size={15} className="text-rose-400" />
-            <span>Kéo mũi tên 3D để chỉnh nhanh Bán kính (R), Góc quay và Cao độ nâng</span>
-          </div>
-        )}
-
         {/* Live Safety Lift Percentage Pill */}
         <div
-          className="px-4 py-2 rounded-lg backdrop-blur-md border shadow-lg flex items-center gap-3 pointer-events-auto"
+          className="px-2.5 sm:px-3.5 py-1 sm:py-2 rounded-lg backdrop-blur-md border shadow-lg flex items-center gap-2 sm:gap-3 pointer-events-auto shrink-0"
           style={{
             backgroundColor: liftCategory.bgColor,
             borderColor: liftCategory.color
           }}
         >
           <div className="text-right">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300">Khả năng tải (Lift %)</div>
-            <div className="text-lg font-black font-mono tracking-tight" style={{ color: liftCategory.color }}>
-              {liftPercentage > 0 ? `${liftPercentage.toFixed(1)}%` : 'NGOÀI BẢNG TẢI'}
+            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-300">Khả năng tải</div>
+            <div className="text-sm sm:text-lg font-black font-mono tracking-tight leading-none sm:leading-tight" style={{ color: liftCategory.color }}>
+              {liftPercentage > 0 ? `${liftPercentage.toFixed(1)}%` : 'NGOÀI BẢNG'}
             </div>
           </div>
-          <div className="h-8 w-px bg-slate-700/60" />
-          <div className="text-left text-xs font-mono">
+          <div className="h-5 sm:h-8 w-px bg-slate-700/60" />
+          <div className="text-left text-[9px] sm:text-xs font-mono leading-tight">
             <div className="text-slate-300">
-              Tổng tải: <span className="font-bold text-white">{grossLoad.toFixed(2)}t</span>
+              Tổng: <span className="font-bold text-white">{grossLoad.toFixed(1)}t</span>
             </div>
-            <div className="text-slate-400 text-[11px]">
-              Tải cho phép: <span className="font-bold text-sky-300">{ratedCapacity.toFixed(2)}t</span>
+            <div className="text-slate-400 text-[8px] sm:text-[11px]">
+              Max: <span className="font-bold text-sky-300">{ratedCapacity.toFixed(1)}t</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Floating Camera View Switcher Buttons (Docked on Left Side) */}
-      <div className="absolute left-3 top-20 z-30 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700/80 shadow-2xl flex flex-col gap-1 pointer-events-auto min-w-[110px]">
+      {/* Floating Camera View Switcher Buttons */}
+      {/* Desktop Mode (md and up): docked on left side */}
+      <div className="hidden md:flex absolute left-3 top-20 z-30 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700/80 shadow-2xl flex-col gap-1 pointer-events-auto min-w-[110px]">
         <div className="text-[9px] font-bold text-slate-400 px-2 py-0.5 uppercase tracking-wider font-mono border-b border-slate-800 text-center select-none">
           Góc nhìn
         </div>
@@ -1197,7 +1203,6 @@ export default function ThreeViewport({
 
         <div className="h-px bg-slate-700/60 my-0.5" />
 
-        {/* 3D Interactive Mouse Drag Toggle */}
         <button
           onClick={() => setIsGizmoActive(!isGizmoActive)}
           title="Bật/Tắt mũi tên kéo thả 3D trực tiếp bằng chuột để chỉnh bán kính, góc quay toa và cao độ"
@@ -1212,11 +1217,71 @@ export default function ThreeViewport({
         </button>
       </div>
 
+      {/* Mobile Mode (under md): Compact Collapsible Pill Dropdown */}
+      <div className="md:hidden absolute left-2 top-14 z-30 pointer-events-auto">
+        <button
+          onClick={() => setIsCameraMenuOpen(!isCameraMenuOpen)}
+          className="bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/90 text-[11px] font-semibold text-slate-200 flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform"
+        >
+          <Camera size={13} className="text-sky-400 shrink-0" />
+          <span>
+            {activeCameraView === '3d' && '3D Tự do'}
+            {activeCameraView === 'top' && 'Mặt bằng'}
+            {activeCameraView === 'side' && 'Mặt bên'}
+            {activeCameraView === 'cab' && 'Buồng lái'}
+            {activeCameraView === 'load' && 'Tải cẩu'}
+          </span>
+          <ChevronDown size={12} className={`text-slate-400 transition-transform ${isCameraMenuOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {isCameraMenuOpen && (
+          <div className="mt-1 bg-slate-900/95 backdrop-blur-md p-1.5 rounded-xl border border-slate-700 shadow-2xl flex flex-col gap-1 min-w-[125px] animate-in fade-in duration-150">
+            <button
+              onClick={() => { setCameraPreset('3d'); setIsCameraMenuOpen(false); }}
+              className={`px-2.5 py-1.5 text-xs rounded-lg text-left flex items-center gap-2 ${activeCameraView === '3d' ? 'bg-sky-500 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              <Camera size={13} /> 3D Tự do
+            </button>
+            <button
+              onClick={() => { setCameraPreset('top'); setIsCameraMenuOpen(false); }}
+              className={`px-2.5 py-1.5 text-xs rounded-lg text-left flex items-center gap-2 ${activeCameraView === 'top' ? 'bg-sky-500 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              <Compass size={13} /> Mặt bằng
+            </button>
+            <button
+              onClick={() => { setCameraPreset('side'); setIsCameraMenuOpen(false); }}
+              className={`px-2.5 py-1.5 text-xs rounded-lg text-left flex items-center gap-2 ${activeCameraView === 'side' ? 'bg-sky-500 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              <Layers size={13} /> Mặt bên
+            </button>
+            <button
+              onClick={() => { setCameraPreset('cab'); setIsCameraMenuOpen(false); }}
+              className={`px-2.5 py-1.5 text-xs rounded-lg text-left flex items-center gap-2 ${activeCameraView === 'cab' ? 'bg-sky-500 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              <Eye size={13} /> Buồng lái
+            </button>
+            <button
+              onClick={() => { setCameraPreset('load'); setIsCameraMenuOpen(false); }}
+              className={`px-2.5 py-1.5 text-xs rounded-lg text-left flex items-center gap-2 ${activeCameraView === 'load' ? 'bg-sky-500 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              <Box size={13} /> Tải cẩu
+            </button>
+            <div className="h-px bg-slate-800 my-0.5" />
+            <button
+              onClick={() => { setIsGizmoActive(!isGizmoActive); setIsCameraMenuOpen(false); }}
+              className={`px-2.5 py-1.5 text-xs rounded-lg text-left flex items-center gap-2 ${isGizmoActive ? 'bg-rose-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              <Move3d size={13} /> {isGizmoActive ? 'Tắt kéo 3D' : 'Bật kéo 3D'}
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Trajectory Simulation & Play Controls + Real-Time Load Rotation */}
-      <div className="absolute bottom-4 right-4 z-30 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700/80 shadow-xl flex items-center gap-2 shrink-0">
+      <div className="absolute bottom-2 sm:bottom-4 right-2 sm:right-4 z-30 bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-xl border border-slate-700/80 shadow-xl flex items-center gap-1.5 sm:gap-2 shrink-0 max-w-[96%] flex-wrap justify-end">
         {/* Real-time Direct Load Rotation Quick Control */}
-        <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-700/60 rounded-lg px-2 py-1 text-xs">
-          <RotateCw size={13} className="text-emerald-400 shrink-0" />
+        <div className="flex items-center gap-1 bg-slate-950/70 border border-slate-700/60 rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs shrink-0">
+          <RotateCw size={12} className="text-emerald-400 shrink-0" />
           <span className="text-[11px] text-slate-300 font-medium hidden sm:inline">Xoay tải:</span>
           <WheelNumberInput
             value={loadRotation || 0}
@@ -1228,9 +1293,9 @@ export default function ThreeViewport({
             step={5}
             wrapAround={true}
             unit="°"
-            className="w-14 bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-xs text-emerald-400 font-mono font-bold text-center focus:border-emerald-500"
+            className="w-11 sm:w-14 bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-xs text-emerald-400 font-mono font-bold text-center focus:border-emerald-500"
           />
-          <div className="flex items-center gap-0.5">
+          <div className="hidden sm:flex items-center gap-0.5">
             {[0, 90, 180, 270].map((deg) => (
               <button
                 key={deg}
@@ -1252,13 +1317,13 @@ export default function ThreeViewport({
 
         <button
           onClick={() => setIsSimulating(!isSimulating)}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow transition-all whitespace-nowrap cursor-pointer ${
+          className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold rounded-lg flex items-center gap-1 sm:gap-1.5 shadow transition-all whitespace-nowrap cursor-pointer shrink-0 ${
             isSimulating
               ? 'bg-amber-600 hover:bg-amber-500 text-white'
               : 'bg-emerald-600 hover:bg-emerald-500 text-white'
           }`}
         >
-          {isSimulating ? <Pause size={14} className="shrink-0" /> : <Play size={14} className="shrink-0" />}
+          {isSimulating ? <Pause size={13} className="shrink-0" /> : <Play size={13} className="shrink-0" />}
           <span className="hidden sm:inline">{isSimulating ? 'Tạm dừng mô phỏng' : 'Chạy thử đường cẩu (Pick → Set)'}</span>
           <span className="sm:hidden">{isSimulating ? 'Dừng' : 'Mô phỏng'}</span>
         </button>
@@ -1267,10 +1332,10 @@ export default function ThreeViewport({
         {onOpenVideoModal && (
           <button
             onClick={onOpenVideoModal}
-            className="px-3 py-1.5 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow transition-all whitespace-nowrap cursor-pointer bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/20"
+            className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold rounded-lg flex items-center gap-1 shadow transition-all whitespace-nowrap cursor-pointer bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/20 shrink-0"
             title="Xuất video ngắn mô phỏng nâng hạ 3D (MP4 / Full HD)"
           >
-            <Video size={14} className="shrink-0" />
+            <Video size={13} className="shrink-0" />
             <span className="hidden sm:inline">Quay video 3D</span>
             <span className="sm:hidden">Video</span>
           </button>
@@ -1278,7 +1343,7 @@ export default function ThreeViewport({
       </div>
 
       {/* Floating Bottom Center: Outrigger Pressure Legend */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-800 text-[11px] text-slate-400 flex items-center gap-4 pointer-events-none hidden md:flex">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-800 text-[11px] text-slate-400 items-center gap-4 pointer-events-none hidden lg:flex">
         <span className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Áp lực an toàn (&lt;85%)
         </span>

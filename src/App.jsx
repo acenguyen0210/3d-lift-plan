@@ -20,7 +20,14 @@ import {
   ShieldCheck,
   Cpu,
   Info,
-  Video
+  Video,
+  Sliders,
+  Menu,
+  X,
+  MoreVertical,
+  ChevronDown,
+  Eye,
+  Camera
 } from 'lucide-react';
 
 import { DEFAULT_CRANES } from './data/defaultCranes';
@@ -62,6 +69,8 @@ export default function App() {
 
   const [selectedCrane, setSelectedCrane] = useState(cranes[0]);
   const [activeTab, setActiveTab] = useState('crane'); // 'crane', 'load', 'mat', 'obstacle', 'dual_point'
+  const [mobileViewMode, setMobileViewMode] = useState('split'); // '3d', 'split', 'panel'
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Crane Kinematics & Config
   const [boomLength, setBoomLength] = useState(23.0);
@@ -513,31 +522,46 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-sans">
       {/* Top Navigation Header */}
-      <header className="h-14 border-b border-slate-800 bg-slate-900/95 backdrop-blur-md px-4 flex items-center justify-between z-30 shrink-0 print:hidden">
+      <header className="h-14 border-b border-slate-800 bg-slate-900/95 backdrop-blur-md px-2.5 sm:px-4 flex items-center justify-between z-30 shrink-0 print:hidden relative">
         {/* Logo & Title */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 to-amber-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
-            <Truck className="text-white" size={20} />
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-600 to-amber-500 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
+            <Truck className="text-white" size={17} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm font-black tracking-wider uppercase bg-gradient-to-r from-sky-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent">
-                3D LIFT PLAN PRO
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-xs sm:text-sm font-black tracking-wider uppercase bg-gradient-to-r from-sky-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent whitespace-nowrap">
+                3D LIFT PLAN
               </h1>
-              <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/30 px-1.5 py-0.2 rounded font-bold">
-                ENGINEERING V2.0
+              <span className="text-[9px] sm:text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/30 px-1 py-0.2 rounded font-bold shrink-0">
+                V2.0
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">
+            <p className="text-[11px] text-slate-400 hidden md:block">
               Hệ thống Tính toán & Mô phỏng Nâng hạ 3D
             </p>
           </div>
         </div>
 
-        {/* Global Safety Status Badge */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Global Safety Status Badge & Actions */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* Safety Status Badge */}
+          {/* Mobile version: compact percentage badge */}
           <div
-            className="px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 sm:gap-2 shadow-sm shrink-0 whitespace-nowrap"
+            className="sm:hidden px-2 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1 shadow-sm shrink-0 whitespace-nowrap"
+            style={{
+              backgroundColor: liftCategory.bgColor,
+              borderColor: liftCategory.color,
+              color: liftCategory.color
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full animate-ping shrink-0" style={{ backgroundColor: liftCategory.color }} />
+            <span>{liftPercentage > 0 ? `${liftPercentage.toFixed(0)}%` : 'NGOÀI'}</span>
+          </div>
+
+          {/* Desktop/Tablet version: full text */}
+          <div
+            className="hidden sm:flex px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold border items-center gap-1.5 sm:gap-2 shadow-sm shrink-0 whitespace-nowrap"
             style={{
               backgroundColor: liftCategory.bgColor,
               borderColor: liftCategory.color,
@@ -548,15 +572,15 @@ export default function App() {
             <span>{liftCategory.label} ({liftPercentage > 0 ? `${liftPercentage.toFixed(1)}%` : 'NGOÀI TẢI'})</span>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Desktop Secondary Action Buttons */}
+          <div className="hidden md:flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setIsCustomCraneModalOpen(true)}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               title="Khai báo loại cẩu mới hoặc tải bảng tải ngoài"
             >
               <Cpu size={14} className="text-sky-400 shrink-0" />
-              <span className="hidden md:inline">Thêm Cẩu Ngoài</span>
+              <span>Thêm Cẩu</span>
             </button>
 
             <button
@@ -565,7 +589,7 @@ export default function App() {
               title="Lưu phương án cẩu (.json)"
             >
               <Save size={14} className="text-emerald-400 shrink-0" />
-              <span className="hidden sm:inline">Lưu file</span>
+              <span>Lưu</span>
             </button>
 
             <label
@@ -573,7 +597,7 @@ export default function App() {
               title="Mở phương án cẩu đã lưu (.json)"
             >
               <FolderOpen size={14} className="text-amber-400 shrink-0" />
-              <span className="hidden sm:inline">Mở file</span>
+              <span>Mở</span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -582,33 +606,158 @@ export default function App() {
                 className="hidden"
               />
             </label>
+          </div>
 
+          {/* Primary Action Buttons (Always visible) */}
+          <button
+            onClick={() => setIsVideoModalOpen(true)}
+            className="bg-rose-600 hover:bg-rose-500 text-white px-2 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-md shadow-rose-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            title="Xuất video ngắn mô phỏng nâng hạ 3D (MP4 / Full HD)"
+          >
+            <Video size={14} className="shrink-0" />
+            <span className="hidden xs:inline sm:hidden">Video</span>
+            <span className="hidden sm:inline">Xuất Video 3D</span>
+          </button>
+
+          <button
+            onClick={handleOpenReport}
+            className="bg-sky-600 hover:bg-sky-500 text-white px-2 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-md shadow-sky-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            title="Xuất thuyết minh biện pháp nâng hạ 3D"
+          >
+            <FileText size={14} className="shrink-0" />
+            <span className="hidden xs:inline sm:hidden">Thuyết Minh</span>
+            <span className="hidden sm:inline">Xuất Thuyết Minh Cẩu</span>
+          </button>
+
+          {/* Mobile Secondary Menu Toggle (⋮) */}
+          <div className="relative md:hidden shrink-0">
             <button
-              onClick={() => setIsVideoModalOpen(true)}
-              className="bg-rose-600 hover:bg-rose-500 text-white px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md shadow-rose-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-              title="Xuất video ngắn mô phỏng nâng hạ 3D (MP4 / Full HD)"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg transition-colors cursor-pointer"
+              title="Menu mở rộng"
             >
-              <Video size={14} className="shrink-0" />
-              <span className="hidden sm:inline">Xuất Video 3D</span>
-              <span className="sm:hidden">Video</span>
+              {isMobileMenuOpen ? <X size={16} /> : <MoreVertical size={16} />}
             </button>
 
-            <button
-              onClick={handleOpenReport}
-              className="bg-sky-600 hover:bg-sky-500 text-white px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md shadow-sky-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <FileText size={14} className="shrink-0" />
-              <span className="hidden sm:inline">Xuất Thuyết Minh Cẩu</span>
-              <span className="sm:hidden">Thuyết Minh</span>
-            </button>
+            {/* Mobile Dropdown Popover */}
+            {isMobileMenuOpen && (
+              <div className="absolute right-0 top-11 mt-1 bg-slate-900/95 border border-slate-700/90 rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 z-50 min-w-[170px] backdrop-blur-md animate-in fade-in duration-150">
+                <button
+                  onClick={() => {
+                    setIsCustomCraneModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-xs text-left text-slate-200 hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
+                >
+                  <Cpu size={14} className="text-sky-400 shrink-0" />
+                  <span>Thêm Cẩu Ngoài</span>
+                </button>
+                <button
+                  onClick={() => {
+                    handleExportProjectJSON();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-xs text-left text-slate-200 hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
+                >
+                  <Save size={14} className="text-emerald-400 shrink-0" />
+                  <span>Lưu File (.json)</span>
+                </button>
+                <label className="px-2.5 py-1.5 rounded-lg text-xs text-left text-slate-200 hover:bg-slate-800 flex items-center gap-2 cursor-pointer">
+                  <FolderOpen size={14} className="text-amber-400 shrink-0" />
+                  <span>Mở File (.json)</span>
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={(e) => {
+                      handleImportProjectJSON(e);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="hidden"
+                  />
+                </label>
+                <div className="h-px bg-slate-800 my-0.5" />
+                <button
+                  onClick={() => {
+                    setIsCopyrightModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-xs text-left text-slate-400 hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
+                >
+                  <Info size={14} className="text-sky-400 shrink-0" />
+                  <span>Thông tin tác giả</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
+      {/* Mobile View Mode Switcher Bar (Visible on mobile/tablet under lg) */}
+      <div className="lg:hidden flex items-center justify-between px-3 py-1.5 bg-slate-900/90 border-b border-slate-800 text-xs shrink-0 select-none">
+        <span className="text-[11px] font-medium text-slate-400 hidden xs:inline">Chế độ xem:</span>
+        <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 shadow-inner w-full xs:w-auto justify-between xs:justify-start">
+          <button
+            type="button"
+            onClick={() => setMobileViewMode('3d')}
+            className={`flex-1 xs:flex-initial px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+              mobileViewMode === '3d'
+                ? 'bg-sky-500 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Eye size={12} />
+            <span>3D Toàn cảnh</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileViewMode('split')}
+            className={`flex-1 xs:flex-initial px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+              mobileViewMode === 'split'
+                ? 'bg-sky-500 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Layers size={12} />
+            <span>Chia đôi</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileViewMode('panel')}
+            className={`flex-1 xs:flex-initial px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+              mobileViewMode === 'panel'
+                ? 'bg-sky-500 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Sliders size={12} />
+            <span>Thông số</span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Workspace: 3D Viewport on Left, Control Inspector Tabs on Right */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative print:hidden">
         {/* Left Side: 3D Viewport Simulation Window */}
-        <div className="flex-1 h-[50vh] lg:h-full relative p-2 lg:p-3 overflow-hidden">
+        <div
+          className={`
+            relative overflow-hidden transition-all duration-200
+            ${mobileViewMode === 'panel' ? 'hidden lg:block lg:flex-1 lg:h-full' : ''}
+            ${mobileViewMode === '3d' ? 'flex-1 h-full' : ''}
+            ${mobileViewMode === 'split' ? 'h-[44vh] lg:h-full lg:flex-1' : ''}
+            p-1.5 sm:p-2 lg:p-3
+          `}
+        >
+          {/* Quick parameter trigger when in full 3D mode on mobile */}
+          {mobileViewMode === '3d' && (
+            <button
+              type="button"
+              onClick={() => setMobileViewMode('panel')}
+              className="lg:hidden absolute bottom-3 left-3 z-30 bg-sky-600/95 hover:bg-sky-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-2xl flex items-center gap-1.5 border border-sky-400/50 backdrop-blur-md cursor-pointer animate-in fade-in duration-200"
+            >
+              <Sliders size={13} />
+              <span>Chỉnh thông số</span>
+            </button>
+          )}
           {/* Floating Camera Framing Banner when adjusting report view angles */}
           {adjustingViewConfig && (
             <div className="absolute top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-950/95 border-2 border-amber-400 text-slate-100 px-5 py-3 rounded-2xl shadow-2xl flex flex-col md:flex-row items-center gap-4 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto max-w-[95%]">
@@ -721,68 +870,91 @@ export default function App() {
         </div>
 
         {/* Right Side: Engineering Inspector & Control Panels */}
-        <div className="w-full lg:w-[460px] xl:w-[500px] h-[50vh] lg:h-full border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-950 flex flex-col z-20 shrink-0">
+        <div
+          className={`
+            w-full lg:w-[460px] xl:w-[500px] border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-950 flex flex-col z-20 shrink-0 transition-all duration-200
+            ${mobileViewMode === '3d' ? 'hidden lg:flex' : ''}
+            ${mobileViewMode === 'panel' ? 'flex-1 h-full' : ''}
+            ${mobileViewMode === 'split' ? 'flex-1 h-[56vh] lg:h-full' : ''}
+          `}
+        >
+          {/* Quick Banner when in full parameter panel mode on mobile */}
+          {mobileViewMode === 'panel' && (
+            <div className="lg:hidden flex items-center justify-between px-3 py-1.5 bg-sky-950/60 border-b border-sky-800/40 text-xs shrink-0">
+              <span className="text-[11px] text-sky-300 font-semibold flex items-center gap-1.5">
+                <Sliders size={13} /> Chế độ Toàn màn hình Thông số
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileViewMode('3d')}
+                className="px-2.5 py-0.5 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-[11px] font-bold flex items-center gap-1 shadow cursor-pointer"
+              >
+                <Eye size={12} /> Xem 3D
+              </button>
+            </div>
+          )}
+
           {/* Navigation Tabs Bar */}
-          <div className="flex items-center border-b border-slate-800 bg-slate-900/80 px-1.5 pt-1.5 gap-1 shrink-0 select-none">
+          <div className="flex items-center border-b border-slate-800 bg-slate-900/80 px-2 pt-1.5 gap-1.5 shrink-0 select-none overflow-x-auto no-scrollbar scroll-smooth">
             <button
               onClick={() => setActiveTab('crane')}
-              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`shrink-0 py-2 px-3 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'crane'
                   ? 'border-sky-500 bg-slate-950 text-sky-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               <Truck size={14} className="shrink-0" />
-              <span className="truncate">Cần cẩu</span>
+              <span>Cần cẩu</span>
             </button>
 
             <button
               onClick={() => setActiveTab('load')}
-              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`shrink-0 py-2 px-3 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'load'
                   ? 'border-amber-500 bg-slate-950 text-amber-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               <Package size={14} className="shrink-0" />
-              <span className="truncate">Tải & Dây</span>
+              <span>Tải & Dây</span>
             </button>
 
             <button
               onClick={() => setActiveTab('mat')}
-              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`shrink-0 py-2 px-3 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'mat'
                   ? 'border-emerald-500 bg-slate-950 text-emerald-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               <Layers size={14} className="shrink-0" />
-              <span className="truncate">Chân chống</span>
+              <span>Chân chống</span>
             </button>
 
             <button
               onClick={() => setActiveTab('dual_point')}
-              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`shrink-0 py-2 px-3 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'dual_point'
                   ? 'border-rose-500 bg-slate-950 text-rose-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               <ArrowRight size={14} className="shrink-0" />
-              <span className="truncate">Pick → Set</span>
+              <span>Pick → Set</span>
             </button>
 
             <button
               onClick={() => setActiveTab('obstacle')}
               title="Vật cản công trình & Vận tốc gió"
-              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`shrink-0 py-2 px-3 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'obstacle'
                   ? 'border-purple-500 bg-slate-950 text-purple-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               <Building2 size={14} className="shrink-0" />
-              <span className="truncate">Vật cản</span>
+              <span>Vật cản</span>
             </button>
           </div>
 
