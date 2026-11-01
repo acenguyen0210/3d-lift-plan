@@ -524,27 +524,27 @@ export default function App() {
       {/* Top Navigation Header */}
       <header className="h-14 border-b border-slate-800 bg-slate-900/95 backdrop-blur-md px-2.5 sm:px-4 flex items-center justify-between z-30 shrink-0 print:hidden relative">
         {/* Logo & Title */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-600 to-amber-500 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
-            <Truck className="text-white" size={17} />
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 to-amber-500 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
+            <Truck className="text-white" size={20} />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-xs sm:text-sm font-black tracking-wider uppercase bg-gradient-to-r from-sky-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent whitespace-nowrap">
-                3D LIFT PLAN
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-black tracking-wider uppercase bg-gradient-to-r from-sky-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent whitespace-nowrap">
+                3D LIFT PLAN PRO
               </h1>
-              <span className="text-[9px] sm:text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/30 px-1 py-0.2 rounded font-bold shrink-0">
-                V2.0
+              <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/30 px-1.5 py-0.2 rounded font-bold shrink-0">
+                ENGINEERING V2.0
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 hidden md:block">
+            <p className="text-[11px] text-slate-400 hidden sm:block">
               Hệ thống Tính toán & Mô phỏng Nâng hạ 3D
             </p>
           </div>
         </div>
 
         {/* Global Safety Status Badge & Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Safety Status Badge */}
           {/* Mobile version: compact percentage badge */}
           <div
@@ -573,14 +573,14 @@ export default function App() {
           </div>
 
           {/* Desktop Secondary Action Buttons */}
-          <div className="hidden md:flex items-center gap-1.5 shrink-0">
+          <div className="hidden md:flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={() => setIsCustomCraneModalOpen(true)}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               title="Khai báo loại cẩu mới hoặc tải bảng tải ngoài"
             >
               <Cpu size={14} className="text-sky-400 shrink-0" />
-              <span>Thêm Cẩu</span>
+              <span>Thêm Cẩu Ngoài</span>
             </button>
 
             <button
@@ -589,7 +589,7 @@ export default function App() {
               title="Lưu phương án cẩu (.json)"
             >
               <Save size={14} className="text-emerald-400 shrink-0" />
-              <span>Lưu</span>
+              <span>Lưu file</span>
             </button>
 
             <label
@@ -597,7 +597,7 @@ export default function App() {
               title="Mở phương án cẩu đã lưu (.json)"
             >
               <FolderOpen size={14} className="text-amber-400 shrink-0" />
-              <span>Mở</span>
+              <span>Mở file</span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -611,22 +611,21 @@ export default function App() {
           {/* Primary Action Buttons (Always visible) */}
           <button
             onClick={() => setIsVideoModalOpen(true)}
-            className="bg-rose-600 hover:bg-rose-500 text-white px-2 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-md shadow-rose-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="bg-rose-600 hover:bg-rose-500 text-white px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md shadow-rose-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             title="Xuất video ngắn mô phỏng nâng hạ 3D (MP4 / Full HD)"
           >
             <Video size={14} className="shrink-0" />
-            <span className="hidden xs:inline sm:hidden">Video</span>
             <span className="hidden sm:inline">Xuất Video 3D</span>
+            <span className="sm:hidden">Video</span>
           </button>
 
           <button
             onClick={handleOpenReport}
-            className="bg-sky-600 hover:bg-sky-500 text-white px-2 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-md shadow-sky-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            title="Xuất thuyết minh biện pháp nâng hạ 3D"
+            className="bg-sky-600 hover:bg-sky-500 text-white px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md shadow-sky-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             <FileText size={14} className="shrink-0" />
-            <span className="hidden xs:inline sm:hidden">Thuyết Minh</span>
             <span className="hidden sm:inline">Xuất Thuyết Minh Cẩu</span>
+            <span className="sm:hidden">Thuyết Minh</span>
           </button>
 
           {/* Mobile Secondary Menu Toggle (⋮) */}
@@ -895,66 +894,66 @@ export default function App() {
           )}
 
           {/* Navigation Tabs Bar */}
-          <div className="flex items-center border-b border-slate-800 bg-slate-900/80 px-2 pt-1.5 gap-1.5 shrink-0 select-none overflow-x-auto no-scrollbar scroll-smooth">
+          <div className="flex items-center border-b border-slate-800 bg-slate-900/80 px-1.5 pt-1.5 gap-1 shrink-0 select-none overflow-x-auto no-scrollbar scroll-smooth">
             <button
               onClick={() => setActiveTab('crane')}
-              className={`shrink-0 py-2 px-3 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'crane'
                   ? 'border-sky-500 bg-slate-950 text-sky-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               <Truck size={14} className="shrink-0" />
-              <span>Cần cẩu</span>
+              <span className="truncate">Cần cẩu</span>
             </button>
 
             <button
               onClick={() => setActiveTab('load')}
-              className={`shrink-0 py-2 px-3 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'load'
                   ? 'border-amber-500 bg-slate-950 text-amber-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               <Package size={14} className="shrink-0" />
-              <span>Tải & Dây</span>
+              <span className="truncate">Tải & Dây</span>
             </button>
 
             <button
               onClick={() => setActiveTab('mat')}
-              className={`shrink-0 py-2 px-3 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'mat'
                   ? 'border-emerald-500 bg-slate-950 text-emerald-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               <Layers size={14} className="shrink-0" />
-              <span>Chân chống</span>
+              <span className="truncate">Chân chống</span>
             </button>
 
             <button
               onClick={() => setActiveTab('dual_point')}
-              className={`shrink-0 py-2 px-3 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'dual_point'
                   ? 'border-rose-500 bg-slate-950 text-rose-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               <ArrowRight size={14} className="shrink-0" />
-              <span>Pick → Set</span>
+              <span className="truncate">Pick → Set</span>
             </button>
 
             <button
               onClick={() => setActiveTab('obstacle')}
               title="Vật cản công trình & Vận tốc gió"
-              className={`shrink-0 py-2 px-3 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'obstacle'
                   ? 'border-purple-500 bg-slate-950 text-purple-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               <Building2 size={14} className="shrink-0" />
-              <span>Vật cản</span>
+              <span className="truncate">Vật cản</span>
             </button>
           </div>
 

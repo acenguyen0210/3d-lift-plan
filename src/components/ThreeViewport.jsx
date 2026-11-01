@@ -1094,15 +1094,15 @@ export default function ThreeViewport({
       )}
 
       {/* Top Overlay Bar: Status & Key Telemetry */}
-      <div className="absolute top-2 sm:top-3 left-2 sm:left-3 right-2 sm:right-3 flex items-center justify-between pointer-events-none gap-1.5 sm:gap-2">
+      <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none gap-2">
         {/* Crane & Model Tag */}
-        <div className="bg-slate-900/90 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-2 rounded-lg border border-slate-700/80 shadow-lg flex items-center gap-2 sm:gap-3 pointer-events-auto min-w-0 max-w-[58%] sm:max-w-none">
-          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full animate-pulse shrink-0" style={{ backgroundColor: liftCategory.color }} />
-          <div className="min-w-0">
-            <div className="text-[11px] sm:text-xs font-semibold text-slate-200 tracking-wide truncate">{crane?.name || 'Chưa chọn cẩu'}</div>
-            <div className="text-[9px] sm:text-[11px] text-slate-400 font-mono truncate">
-              R: <span className="text-sky-400 font-bold">{workingRadius.toFixed(1)}m</span> | α:{' '}
-              <span className="text-amber-400 font-bold">{boomAngle.toFixed(1)}°</span> | L:{' '}
+        <div className="bg-slate-900/85 backdrop-blur-md px-3.5 py-2 rounded-lg border border-slate-700/80 shadow-lg flex items-center gap-3 pointer-events-auto">
+          <div className="w-3 h-3 rounded-full animate-pulse shrink-0" style={{ backgroundColor: liftCategory.color }} />
+          <div>
+            <div className="text-xs font-semibold text-slate-200 tracking-wide">{crane?.name || 'Chưa chọn cẩu'}</div>
+            <div className="text-[11px] text-slate-400 font-mono">
+              Bán kính: <span className="text-sky-400 font-bold">{workingRadius.toFixed(1)}m</span> | Góc cần:{' '}
+              <span className="text-amber-400 font-bold">{boomAngle.toFixed(1)}°</span> | Cần:{' '}
               <span className="text-emerald-400 font-bold">{boomLength.toFixed(1)}m</span>
             </div>
           </div>
@@ -1110,25 +1110,25 @@ export default function ThreeViewport({
 
         {/* Live Safety Lift Percentage Pill */}
         <div
-          className="px-2.5 sm:px-3.5 py-1 sm:py-2 rounded-lg backdrop-blur-md border shadow-lg flex items-center gap-2 sm:gap-3 pointer-events-auto shrink-0"
+          className="px-4 py-2 rounded-lg backdrop-blur-md border shadow-lg flex items-center gap-3 pointer-events-auto shrink-0"
           style={{
             backgroundColor: liftCategory.bgColor,
             borderColor: liftCategory.color
           }}
         >
           <div className="text-right">
-            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-300">Khả năng tải</div>
-            <div className="text-sm sm:text-lg font-black font-mono tracking-tight leading-none sm:leading-tight" style={{ color: liftCategory.color }}>
-              {liftPercentage > 0 ? `${liftPercentage.toFixed(1)}%` : 'NGOÀI BẢNG'}
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300">Khả năng tải (Lift %)</div>
+            <div className="text-lg font-black font-mono tracking-tight" style={{ color: liftCategory.color }}>
+              {liftPercentage > 0 ? `${liftPercentage.toFixed(1)}%` : 'NGOÀI BẢNG TẢI'}
             </div>
           </div>
-          <div className="h-5 sm:h-8 w-px bg-slate-700/60" />
-          <div className="text-left text-[9px] sm:text-xs font-mono leading-tight">
+          <div className="h-8 w-px bg-slate-700/60" />
+          <div className="text-left text-xs font-mono">
             <div className="text-slate-300">
-              Tổng: <span className="font-bold text-white">{grossLoad.toFixed(1)}t</span>
+              Tổng tải: <span className="font-bold text-white">{grossLoad.toFixed(2)}t</span>
             </div>
-            <div className="text-slate-400 text-[8px] sm:text-[11px]">
-              Max: <span className="font-bold text-sky-300">{ratedCapacity.toFixed(1)}t</span>
+            <div className="text-slate-400 text-[11px]">
+              Tải cho phép: <span className="font-bold text-sky-300">{ratedCapacity.toFixed(2)}t</span>
             </div>
           </div>
         </div>
@@ -1278,10 +1278,10 @@ export default function ThreeViewport({
       </div>
 
       {/* Trajectory Simulation & Play Controls + Real-Time Load Rotation */}
-      <div className="absolute bottom-2 sm:bottom-4 right-2 sm:right-4 z-30 bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-xl border border-slate-700/80 shadow-xl flex items-center gap-1.5 sm:gap-2 shrink-0 max-w-[96%] flex-wrap justify-end">
+      <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 z-30 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700/80 shadow-xl flex items-center gap-2 shrink-0">
         {/* Real-time Direct Load Rotation Quick Control */}
-        <div className="flex items-center gap-1 bg-slate-950/70 border border-slate-700/60 rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs shrink-0">
-          <RotateCw size={12} className="text-emerald-400 shrink-0" />
+        <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-700/60 rounded-lg px-2 py-1 text-xs">
+          <RotateCw size={13} className="text-emerald-400 shrink-0" />
           <span className="text-[11px] text-slate-300 font-medium hidden sm:inline">Xoay tải:</span>
           <WheelNumberInput
             value={loadRotation || 0}
@@ -1293,7 +1293,7 @@ export default function ThreeViewport({
             step={5}
             wrapAround={true}
             unit="°"
-            className="w-11 sm:w-14 bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-xs text-emerald-400 font-mono font-bold text-center focus:border-emerald-500"
+            className="w-14 bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-xs text-emerald-400 font-mono font-bold text-center focus:border-emerald-500"
           />
           <div className="hidden sm:flex items-center gap-0.5">
             {[0, 90, 180, 270].map((deg) => (
@@ -1317,13 +1317,13 @@ export default function ThreeViewport({
 
         <button
           onClick={() => setIsSimulating(!isSimulating)}
-          className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold rounded-lg flex items-center gap-1 sm:gap-1.5 shadow transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+          className={`px-3 py-1.5 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow transition-all whitespace-nowrap cursor-pointer ${
             isSimulating
               ? 'bg-amber-600 hover:bg-amber-500 text-white'
               : 'bg-emerald-600 hover:bg-emerald-500 text-white'
           }`}
         >
-          {isSimulating ? <Pause size={13} className="shrink-0" /> : <Play size={13} className="shrink-0" />}
+          {isSimulating ? <Pause size={14} className="shrink-0" /> : <Play size={14} className="shrink-0" />}
           <span className="hidden sm:inline">{isSimulating ? 'Tạm dừng mô phỏng' : 'Chạy thử đường cẩu (Pick → Set)'}</span>
           <span className="sm:hidden">{isSimulating ? 'Dừng' : 'Mô phỏng'}</span>
         </button>
@@ -1332,10 +1332,10 @@ export default function ThreeViewport({
         {onOpenVideoModal && (
           <button
             onClick={onOpenVideoModal}
-            className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold rounded-lg flex items-center gap-1 shadow transition-all whitespace-nowrap cursor-pointer bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/20 shrink-0"
+            className="px-3 py-1.5 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow transition-all whitespace-nowrap cursor-pointer bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/20"
             title="Xuất video ngắn mô phỏng nâng hạ 3D (MP4 / Full HD)"
           >
-            <Video size={13} className="shrink-0" />
+            <Video size={14} className="shrink-0" />
             <span className="hidden sm:inline">Quay video 3D</span>
             <span className="sm:hidden">Video</span>
           </button>
@@ -1343,7 +1343,7 @@ export default function ThreeViewport({
       </div>
 
       {/* Floating Bottom Center: Outrigger Pressure Legend */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-800 text-[11px] text-slate-400 items-center gap-4 pointer-events-none hidden lg:flex">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-800 text-[11px] text-slate-400 flex items-center gap-4 pointer-events-none hidden md:flex">
         <span className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Áp lực an toàn (&lt;85%)
         </span>
