@@ -65,7 +65,7 @@ function main() {
   // 1. Kiểm tra Git
   const gitVersion = runGitOutput('--version');
   if (!gitVersion) {
-    console.error('❌ Không tìm thấy Git trên hệ thống! Vui lòng cài đặt Git.');
+    console.error('❌ Không tìm thấy Git trên hệ thống! Vui lòng kiểm tra đường dẫn cài đặt Git.');
     process.exit(1);
   }
   console.log(`✓ Sử dụng Git: ${gitVersion}`);
@@ -93,10 +93,8 @@ function main() {
     console.log('\n⚠️  CHƯA CẤU HÌNH REMOTE GITHUB (origin)!');
     console.log('------------------------------------------------------');
     console.log('Để đẩy code lên GitHub, bạn cần liên kết dự án với Repository trên GitHub:');
-    console.log(' 1. Tạo repository mới trên https://github.com/new');
-    console.log(' 2. Chạy lệnh sau trong Terminal:');
-    console.log('    git remote add origin https://github.com/<tai-khoan>/<ten-repo>.git');
-    console.log(' hoặc chạy file AUTO_PUSH_GITHUB.bat để được nhập trực tiếp.');
+    console.log(' Chạy lệnh sau trong Terminal:');
+    console.log(' git remote add origin https://github.com/<tai-khoan>/<ten-repo>.git');
     console.log('------------------------------------------------------\n');
   } else {
     console.log(`✓ GitHub Remote: ${remoteUrl}`);
@@ -105,51 +103,61 @@ function main() {
   // 5. Kiểm tra thay đổi (changes)
   const status = runGitOutput('status --porcelain');
   const customMessage = process.argv.slice(2).join(' ').trim();
+  let hasNewCommit = false;
 
-  if (!status) {
-    console.log('✓ Không có thay đổi mới cần commit.');
-    
-    // Kiểm tra xem có commit nào chưa push không
-    if (remoteUrl) {
-      const unpushed = runGitOutput(`log origin/${branch}..HEAD --oneline`);
-      if (unpushed) {
-        console.log(`⚡ Đang đẩy các commit chưa push lên GitHub (${branch})...`);
-        runGit(`push -u origin ${branch}`);
-        console.log('🎉 Push thành công!');
-      } else {
-        console.log('✨ Mã nguồn đã hoàn toàn đồng bộ với GitHub.');
-      }
-    }
-    return;
+  if (status) {
+    console.log('\n📦 Đang thêm các file thay đổi (git add -A)...');
+    runGit('add -A');
+
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    const commitMsg = customMessage || `Auto-update: ${timestamp} - Cập nhật tính năng & mô hình 3D`;
+
+    console.log(`📝 Đang ghi nhận commit: "${commitMsg}"...`);
+    runGit(`commit -m "${commitMsg.replace(/"/g, '\\"')}"`);
+    hasNewCommit = true;
+  } else {
+    console.log('✓ Không có file sửa đổi mới trong thư mục làm việc.');
   }
 
-  console.log('\n📦 Đang thêm các file thay đổi (git add -A)...');
-  runGit('add -A');
-
-  // 6. Tạo Commit
-  const now = new Date();
-  const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-  const commitMsg = customMessage || `Auto-update: ${timestamp} - Cập nhật tính năng & mô phỏng 3D`;
-
-  console.log(`📝 Đang ghi nhận commit: "${commitMsg}"...`);
-  runGit(`commit -m "${commitMsg.replace(/"/g, '\\"')}"`);
-
-  // 7. Push lên GitHub nếu có remote
+  // 6. Kiểm tra và Đẩy code lên GitHub
   if (remoteUrl) {
-    console.log(`\n🚀 Đang đẩy code lên GitHub (${remoteUrl} - nhánh ${branch})...`);
-    try {
-      runGit(`push -u origin ${branch}`);
-      console.log('\n🎉 ĐÃ ĐỒNG BỘ THÀNH CÔNG LÊN GITHUB!');
-    } catch (pushErr) {
-      console.error('\n❌ Không thể push trực tiếp lên GitHub.');
-      console.log('Gợi ý:');
-      console.log('- Đảm bảo bạn đã đăng nhập tài khoản GitHub trên máy.');
-      console.log('- Nếu remote có code mới chưa kéo về, chạy: git pull --rebase origin ' + branch);
-      process.exit(1);
+    const hasRemoteBranch = runGitOutput(`rev-parse --verify origin/${branch}`) !== null;
+    let needPush = false;
+
+    if (!hasRemoteBranch) {
+      console.log(`⚡ Phát hiện kho GitHub chưa có nhánh [${branch}]. Tiến hành đẩy toàn bộ code lần đầu...`);
+      needPush = true;
+    } else {
+      const unpushed = runGitOutput(`log origin/${branch}..HEAD --oneline`);
+      if (unpushed || hasNewCommit) {
+        console.log(`⚡ Đang đẩy các commit mới lên GitHub (${branch})...`);
+        needPush = true;
+      }
+    }
+
+    if (needPush) {
+      console.log(`🚀 Đang kết nối và đẩy code lên: ${remoteUrl}`);
+      try {
+        runGit(`push -u origin ${branch}`);
+        console.log('\n======================================================');
+        console.log('🎉 CHÚC MỪNG: ĐÃ ĐẨY CODE LÊN GITHUB THÀNH CÔNG RỰC RỠ!');
+        console.log(`🔗 Xem mã nguồn tại: ${remoteUrl.replace(/\.git$/, '')}`);
+        console.log('======================================================\n');
+      } catch (pushErr) {
+        console.error('\n❌ Không thể đẩy code trực tiếp lên GitHub.');
+        console.log('Gợi ý xử lý:');
+        console.log('1. Đảm bảo bạn đã đăng nhập tài khoản GitHub khi cửa sổ đăng nhập hiện lên.');
+        console.log('2. Nếu GitHub repo trên web đã có commit trước đó (như README/License), chạy:');
+        console.log(`   git pull --rebase origin ${branch}`);
+        console.log('   sau đó chạy lại file AUTO_PUSH_GITHUB.bat.');
+        process.exit(1);
+      }
+    } else {
+      console.log('✨ Mã nguồn trên máy tính đã hoàn toàn đồng bộ với GitHub (Up to date).');
     }
   } else {
-    console.log('\n✅ Đã commit cục bộ thành công!');
-    console.log('Sau khi thêm remote GitHub, chạy lại lệnh này để tự động đẩy lên GitHub.');
+    console.log('\n✅ Đã lưu commit cục bộ thành công trên máy tính!');
   }
 }
 
