@@ -31,17 +31,19 @@ export default function CraneSelector({
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl space-y-4">
       {/* Header & Crane Dropdown */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div className="flex items-center gap-2">
-          <Truck className="text-sky-400" size={18} />
-          <h2 className="text-sm font-bold text-slate-100 uppercase tracking-wide">Cấu hình Cần cẩu</h2>
+      <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Truck className="text-sky-400 shrink-0" size={16} />
+          <h2 className="text-xs xl:text-sm font-bold text-slate-100 uppercase tracking-tight whitespace-nowrap">Cấu hình Cần cẩu</h2>
         </div>
         <button
           onClick={onOpenCustomCraneModal}
-          className="text-xs bg-sky-600/20 hover:bg-sky-600/30 text-sky-400 border border-sky-500/30 px-2.5 py-1 rounded-md font-medium transition-all flex items-center gap-1.5"
+          className="text-[11px] xl:text-xs shrink-0 bg-sky-600/20 hover:bg-sky-600/30 text-sky-400 border border-sky-500/30 px-2 py-0.5 xl:px-2.5 xl:py-1 rounded-md font-medium transition-all flex items-center gap-1"
           title="Thêm loại cẩu hoặc nhập bảng tải từ bên ngoài"
         >
-          <PlusCircle size={14} /> Thêm cẩu ngoài
+          <PlusCircle size={13} />
+          <span className="hidden xl:inline">Thêm cẩu ngoài</span>
+          <span className="xl:hidden">+ Cẩu ngoài</span>
         </button>
       </div>
 

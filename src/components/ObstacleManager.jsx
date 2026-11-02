@@ -233,10 +233,10 @@ export default function ObstacleManager({
         </div>
 
         {/* Balanced Auto-Stretching Action Grid for Adding Obstacles */}
-        <div className="grid grid-cols-5 gap-1.5">
+        <div className="grid grid-cols-5 gap-1">
           <button
             onClick={() => handleAddObstacle('wall')}
-            className="bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 py-1.5 px-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all whitespace-nowrap cursor-pointer hover:border-cyan-400/50"
+            className="bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 py-1.5 px-0.5 2xl:px-1 rounded-lg text-[10px] xl:text-[11px] 2xl:text-xs font-medium flex flex-col 2xl:flex-row items-center justify-center gap-0.5 2xl:gap-1 transition-all whitespace-nowrap cursor-pointer hover:border-cyan-400/50"
             title="Thêm Hàng rào / Tường bao quanh công trường theo các điểm vây"
           >
             <Fence size={13} className="shrink-0" />
@@ -244,7 +244,7 @@ export default function ObstacleManager({
           </button>
           <button
             onClick={() => handleAddObstacle('workshop')}
-            className="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 py-1.5 px-1 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition-all whitespace-nowrap cursor-pointer hover:border-emerald-400/50"
+            className="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 py-1.5 px-0.5 2xl:px-1 rounded-lg text-[10px] xl:text-[11px] 2xl:text-xs font-medium flex flex-col 2xl:flex-row items-center justify-center gap-0.5 2xl:gap-1 transition-all whitespace-nowrap cursor-pointer hover:border-emerald-400/50"
             title="Thêm Nhà xưởng kết cấu thép tiền chế (2 mái)"
           >
             <Factory size={13} className="shrink-0" />
@@ -252,7 +252,7 @@ export default function ObstacleManager({
           </button>
           <button
             onClick={() => handleAddObstacle('building')}
-            className="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 py-1.5 px-1 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition-all whitespace-nowrap cursor-pointer hover:border-indigo-400/50"
+            className="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 py-1.5 px-0.5 2xl:px-1 rounded-lg text-[10px] xl:text-[11px] 2xl:text-xs font-medium flex flex-col 2xl:flex-row items-center justify-center gap-0.5 2xl:gap-1 transition-all whitespace-nowrap cursor-pointer hover:border-indigo-400/50"
             title="Thêm Tòa nhà văn phòng / Nhà điều hành"
           >
             <Building2 size={13} className="shrink-0" />
@@ -260,7 +260,7 @@ export default function ObstacleManager({
           </button>
           <button
             onClick={() => handleAddObstacle('power_pole')}
-            className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 py-1.5 px-1 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition-all whitespace-nowrap cursor-pointer hover:border-amber-400/50"
+            className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 py-1.5 px-0.5 2xl:px-1 rounded-lg text-[10px] xl:text-[11px] 2xl:text-xs font-medium flex flex-col 2xl:flex-row items-center justify-center gap-0.5 2xl:gap-1 transition-all whitespace-nowrap cursor-pointer hover:border-amber-400/50"
             title="Thêm Trụ / Cột điện cao thế"
           >
             <Zap size={13} className="shrink-0" />
@@ -268,7 +268,7 @@ export default function ObstacleManager({
           </button>
           <button
             onClick={() => handleAddObstacle('cylinder')}
-            className="bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 py-1.5 px-1 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition-all whitespace-nowrap cursor-pointer hover:border-sky-400/50"
+            className="bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 py-1.5 px-0.5 2xl:px-1 rounded-lg text-[10px] xl:text-[11px] 2xl:text-xs font-medium flex flex-col 2xl:flex-row items-center justify-center gap-0.5 2xl:gap-1 transition-all whitespace-nowrap cursor-pointer hover:border-sky-400/50"
             title="Thêm Bồn tròn / Silo chứa"
           >
             <Disc size={13} className="shrink-0" />

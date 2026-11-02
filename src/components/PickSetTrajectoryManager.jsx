@@ -193,40 +193,39 @@ export default function PickSetTrajectoryManager({
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl space-y-4">
       {/* Header */}
-      <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Navigation className="text-rose-400" size={18} />
-          <div>
-            <h2 className="text-sm font-bold text-slate-100 uppercase tracking-wide">
-              Quỹ đạo cẩu đa điểm ({liftPoints.length} Điểm)
+      <div className="border-b border-slate-800 pb-2.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Navigation className="text-rose-400 shrink-0" size={16} />
+            <h2 className="text-xs xl:text-sm font-bold text-slate-100 uppercase tracking-tight whitespace-nowrap">
+              Quỹ đạo cẩu ({liftPoints.length} Điểm)
             </h2>
-            <div className="text-[11px] text-slate-400">
-              Đón tải → Các điểm né vật cản trung gian → Đặt tải
-            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={handleAddWaypoint}
+              className="bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 px-2 py-0.5 xl:px-2.5 xl:py-1 rounded-md text-[11px] xl:text-xs font-semibold flex items-center gap-1 transition-colors whitespace-nowrap cursor-pointer"
+              title="Thêm điểm né vật cản / chuyển hướng ở giữa"
+            >
+              <Plus size={12} className="shrink-0" />
+              <span className="hidden sm:inline">+ Điểm giữa</span>
+              <span className="sm:hidden">+ Điểm</span>
+            </button>
+            <button
+              onClick={() => setIsSimulating(!isSimulating)}
+              className={`px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-colors shadow whitespace-nowrap shrink-0 cursor-pointer ${
+                isSimulating
+                  ? 'bg-amber-600 hover:bg-amber-500 text-white'
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+              }`}
+            >
+              {isSimulating ? <Pause size={12} className="shrink-0" /> : <Play size={12} className="shrink-0" />}
+              {isSimulating ? 'Dừng' : 'Mô phỏng'}
+            </button>
           </div>
         </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            onClick={handleAddWaypoint}
-            className="bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            title="Thêm điểm né vật cản / chuyển hướng ở giữa"
-          >
-            <Plus size={13} className="shrink-0" /> Điểm giữa
-          </button>
-
-          <button
-            onClick={() => setIsSimulating(!isSimulating)}
-            className={`px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-colors shadow whitespace-nowrap shrink-0 cursor-pointer ${
-              isSimulating
-                ? 'bg-amber-600 hover:bg-amber-500 text-white'
-                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-            }`}
-          >
-            {isSimulating ? <Pause size={13} className="shrink-0" /> : <Play size={13} className="shrink-0" />}
-            {isSimulating ? 'Dừng' : 'Mô phỏng'}
-          </button>
+        <div className="text-[10px] xl:text-[11px] text-slate-400 truncate">
+          Đón tải → Điểm né trung gian → Đặt tải
         </div>
       </div>
 

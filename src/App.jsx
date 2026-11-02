@@ -868,10 +868,10 @@ export default function App() {
           />
         </div>
 
-        {/* Right Side: Engineering Inspector & Control Panels */}
+        {/* Right Side: Engineering Inspector & Control Panels (Không quá 1/4 khung hình trên Desktop) */}
         <div
           className={`
-            w-full lg:w-[460px] xl:w-[500px] border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-950 flex flex-col z-20 shrink-0 transition-all duration-200
+            w-full lg:w-1/4 lg:max-w-[25%] border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-950 flex flex-col z-20 shrink-0 transition-all duration-200
             ${mobileViewMode === '3d' ? 'hidden lg:flex' : ''}
             ${mobileViewMode === 'panel' ? 'flex-1 h-full' : ''}
             ${mobileViewMode === 'split' ? 'flex-1 h-[56vh] lg:h-full' : ''}
@@ -894,65 +894,69 @@ export default function App() {
           )}
 
           {/* Navigation Tabs Bar */}
-          <div className="flex items-center border-b border-slate-800 bg-slate-900/80 px-1.5 pt-1.5 gap-1 shrink-0 select-none overflow-x-auto no-scrollbar scroll-smooth">
+          <div id="desktop-inspector-tabs" className="flex items-center border-b border-slate-800 bg-slate-900/80 px-1 pt-1.5 gap-0.5 shrink-0 select-none overflow-x-auto no-scrollbar scroll-smooth">
             <button
               onClick={() => setActiveTab('crane')}
-              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              title="Cần cẩu"
+              className={`flex-1 min-w-0 py-1.5 2xl:py-2 px-0.5 2xl:px-1 text-[10px] xl:text-[11px] 2xl:text-xs font-semibold rounded-t-lg transition-all flex flex-col 2xl:flex-row items-center justify-center gap-0.5 2xl:gap-1 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'crane'
                   ? 'border-sky-500 bg-slate-950 text-sky-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Truck size={14} className="shrink-0" />
+              <Truck size={13} className="shrink-0" />
               <span className="truncate">Cần cẩu</span>
             </button>
 
             <button
               onClick={() => setActiveTab('load')}
-              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              title="Tải trọng & Thiết bị chằng buộc"
+              className={`flex-1 min-w-0 py-1.5 2xl:py-2 px-0.5 2xl:px-1 text-[10px] xl:text-[11px] 2xl:text-xs font-semibold rounded-t-lg transition-all flex flex-col 2xl:flex-row items-center justify-center gap-0.5 2xl:gap-1 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'load'
                   ? 'border-amber-500 bg-slate-950 text-amber-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Package size={14} className="shrink-0" />
+              <Package size={13} className="shrink-0" />
               <span className="truncate">Tải & Dây</span>
             </button>
 
             <button
               onClick={() => setActiveTab('mat')}
-              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              title="Áp lực chân chống & Tấm lót"
+              className={`flex-1 min-w-0 py-1.5 2xl:py-2 px-0.5 2xl:px-1 text-[10px] xl:text-[11px] 2xl:text-xs font-semibold rounded-t-lg transition-all flex flex-col 2xl:flex-row items-center justify-center gap-0.5 2xl:gap-1 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'mat'
                   ? 'border-emerald-500 bg-slate-950 text-emerald-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Layers size={14} className="shrink-0" />
+              <Layers size={13} className="shrink-0" />
               <span className="truncate">Chân chống</span>
             </button>
 
             <button
               onClick={() => setActiveTab('dual_point')}
-              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              title="Mô phỏng đường cẩu Pick - Set"
+              className={`flex-1 min-w-0 py-1.5 2xl:py-2 px-0.5 2xl:px-1 text-[10px] xl:text-[11px] 2xl:text-xs font-semibold rounded-t-lg transition-all flex flex-col 2xl:flex-row items-center justify-center gap-0.5 2xl:gap-1 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'dual_point'
                   ? 'border-rose-500 bg-slate-950 text-rose-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <ArrowRight size={14} className="shrink-0" />
+              <ArrowRight size={13} className="shrink-0" />
               <span className="truncate">Pick → Set</span>
             </button>
 
             <button
               onClick={() => setActiveTab('obstacle')}
               title="Vật cản công trình & Vận tốc gió"
-              className={`flex-1 min-w-0 py-2 px-1 text-xs font-semibold rounded-t-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 border-b-2 whitespace-nowrap cursor-pointer ${
+              className={`flex-1 min-w-0 py-1.5 2xl:py-2 px-0.5 2xl:px-1 text-[10px] xl:text-[11px] 2xl:text-xs font-semibold rounded-t-lg transition-all flex flex-col 2xl:flex-row items-center justify-center gap-0.5 2xl:gap-1 border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === 'obstacle'
                   ? 'border-purple-500 bg-slate-950 text-purple-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Building2 size={14} className="shrink-0" />
+              <Building2 size={13} className="shrink-0" />
               <span className="truncate">Vật cản</span>
             </button>
           </div>
