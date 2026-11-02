@@ -533,7 +533,7 @@ export default function App() {
               <h1 className="text-sm font-black tracking-wider uppercase bg-gradient-to-r from-sky-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent whitespace-nowrap">
                 3D LIFT PLAN PRO
               </h1>
-              <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/30 px-1.5 py-0.2 rounded font-bold shrink-0">
+              <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/30 px-1.5 py-0.2 rounded font-bold shrink-0 hidden sm:inline-block">
                 ENGINEERING V2.0
               </span>
             </div>
@@ -608,24 +608,24 @@ export default function App() {
             </label>
           </div>
 
-          {/* Primary Action Buttons (Always visible) */}
+          {/* Primary Action Buttons */}
           <button
             onClick={() => setIsVideoModalOpen(true)}
-            className="bg-rose-600 hover:bg-rose-500 text-white px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md shadow-rose-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="hidden sm:flex bg-rose-600 hover:bg-rose-500 text-white px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold items-center gap-1.5 shadow-md shadow-rose-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             title="Xuất video ngắn mô phỏng nâng hạ 3D (MP4 / Full HD)"
           >
             <Video size={14} className="shrink-0" />
-            <span className="hidden sm:inline">Xuất Video 3D</span>
-            <span className="sm:hidden">Video</span>
+            <span>Xuất Video 3D</span>
           </button>
 
           <button
             onClick={handleOpenReport}
-            className="bg-sky-600 hover:bg-sky-500 text-white px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md shadow-sky-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="bg-sky-600 hover:bg-sky-500 text-white px-2 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-md shadow-sky-600/30 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            title="Xuất thuyết minh & Biện pháp cẩu PDF"
           >
-            <FileText size={14} className="shrink-0" />
+            <FileText size={13} className="shrink-0" />
             <span className="hidden sm:inline">Xuất Thuyết Minh Cẩu</span>
-            <span className="sm:hidden">Thuyết Minh</span>
+            <span className="sm:hidden text-[11px]">Thuyết Minh</span>
           </button>
 
           {/* Mobile Secondary Menu Toggle (⋮) */}
@@ -640,7 +640,17 @@ export default function App() {
 
             {/* Mobile Dropdown Popover */}
             {isMobileMenuOpen && (
-              <div className="absolute right-0 top-11 mt-1 bg-slate-900/95 border border-slate-700/90 rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 z-50 min-w-[170px] backdrop-blur-md animate-in fade-in duration-150">
+              <div className="absolute right-0 top-full mt-1.5 bg-slate-900/95 border border-slate-700/90 rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 z-50 min-w-[170px] backdrop-blur-md animate-in fade-in duration-150">
+                <button
+                  onClick={() => {
+                    setIsVideoModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-xs text-left text-rose-300 hover:bg-slate-800 flex items-center gap-2 cursor-pointer font-bold"
+                >
+                  <Video size={14} className="text-rose-400 shrink-0" />
+                  <span>Xuất Video 3D</span>
+                </button>
                 <button
                   onClick={() => {
                     setIsCustomCraneModalOpen(true);
@@ -746,17 +756,6 @@ export default function App() {
             p-1.5 sm:p-2 lg:p-3
           `}
         >
-          {/* Quick parameter trigger when in full 3D mode on mobile */}
-          {mobileViewMode === '3d' && (
-            <button
-              type="button"
-              onClick={() => setMobileViewMode('panel')}
-              className="lg:hidden absolute bottom-3 left-3 z-30 bg-sky-600/95 hover:bg-sky-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-2xl flex items-center gap-1.5 border border-sky-400/50 backdrop-blur-md cursor-pointer animate-in fade-in duration-200"
-            >
-              <Sliders size={13} />
-              <span>Chỉnh thông số</span>
-            </button>
-          )}
           {/* Floating Camera Framing Banner when adjusting report view angles */}
           {adjustingViewConfig && (
             <div className="absolute top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-950/95 border-2 border-amber-400 text-slate-100 px-5 py-3 rounded-2xl shadow-2xl flex flex-col md:flex-row items-center gap-4 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto max-w-[95%]">
