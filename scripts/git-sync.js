@@ -145,13 +145,21 @@ function main() {
         console.log(`🔗 Xem mã nguồn tại: ${remoteUrl.replace(/\.git$/, '')}`);
         console.log('======================================================\n');
       } catch (pushErr) {
-        console.error('\n❌ Không thể đẩy code trực tiếp lên GitHub.');
-        console.log('Gợi ý xử lý:');
-        console.log('1. Đảm bảo bạn đã đăng nhập tài khoản GitHub khi cửa sổ đăng nhập hiện lên.');
-        console.log('2. Nếu GitHub repo trên web đã có commit trước đó (như README/License), chạy:');
-        console.log(`   git pull --rebase origin ${branch}`);
-        console.log('   sau đó chạy lại file AUTO_PUSH_GITHUB.bat.');
-        process.exit(1);
+        console.log('⚡ Phát hiện kho GitHub có commit mới trên web. Đang tự động đồng bộ (pull --rebase)...');
+        try {
+          runGit(`pull --rebase origin ${branch}`);
+          runGit(`push -u origin ${branch}`);
+          console.log('\n======================================================');
+          console.log('🎉 CHÚC MỪNG: ĐÃ ĐỒNG BỘ VÀ ĐẨY CODE LÊN GITHUB THÀNH CÔNG!');
+          console.log(`🔗 Xem mã nguồn tại: ${remoteUrl.replace(/\.git$/, '')}`);
+          console.log('======================================================\n');
+        } catch (retryErr) {
+          console.error('\n❌ Không thể đẩy code lên GitHub.');
+          console.log('Gợi ý xử lý:');
+          console.log('1. Đảm bảo bạn đã đăng nhập tài khoản GitHub khi cửa sổ yêu cầu đăng nhập mở ra.');
+          console.log('2. Đảm bảo kết nối mạng Internet ổn định.');
+          process.exit(1);
+        }
       }
     } else {
       console.log('✨ Mã nguồn trên máy tính đã hoàn toàn đồng bộ với GitHub (Up to date).');

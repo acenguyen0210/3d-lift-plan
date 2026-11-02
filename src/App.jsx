@@ -803,10 +803,10 @@ export default function App() {
         {/* Left Side: 3D Viewport Simulation Window */}
         <div
           className={`
-            relative overflow-hidden transition-all duration-200
-            ${mobileViewMode === 'panel' ? 'hidden lg:block lg:flex-1 lg:h-full' : ''}
+            relative overflow-hidden transition-all duration-200 lg:flex-1 lg:min-w-0 lg:h-full
+            ${mobileViewMode === 'panel' ? 'hidden lg:block' : ''}
             ${mobileViewMode === '3d' ? 'flex-1 h-full' : ''}
-            ${mobileViewMode === 'split' ? 'h-[44vh] lg:h-full lg:flex-1' : ''}
+            ${mobileViewMode === 'split' ? 'h-[44vh] lg:h-full' : ''}
             p-1.5 sm:p-2 lg:p-3
           `}
         >
@@ -926,10 +926,10 @@ export default function App() {
         {/* Right Side: Engineering Inspector & Control Panels (Không quá 1/4 khung hình trên Desktop) */}
         <div
           className={`
-            w-full lg:w-1/4 lg:max-w-[25%] border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-950 flex flex-col z-20 shrink-0 transition-all duration-200
+            w-full lg:w-1/4 lg:max-w-[25%] lg:flex-none border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-950 flex flex-col z-20 shrink-0 transition-all duration-200
             ${mobileViewMode === '3d' ? 'hidden lg:flex' : ''}
-            ${mobileViewMode === 'panel' ? 'flex-1 h-full' : ''}
-            ${mobileViewMode === 'split' ? 'flex-1 h-[56vh] lg:h-full' : ''}
+            ${mobileViewMode === 'panel' ? 'flex-1 h-full lg:flex-none' : ''}
+            ${mobileViewMode === 'split' ? 'flex-1 h-[56vh] lg:h-full lg:flex-none' : ''}
           `}
         >
           {/* Quick Banner when in full parameter panel mode on mobile */}
