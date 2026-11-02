@@ -701,8 +701,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Mobile View Mode Switcher Bar (Visible on mobile/tablet under lg) */}
-      <div className="lg:hidden flex items-center justify-between px-3 py-1.5 bg-slate-900/90 border-b border-slate-800 text-xs shrink-0 select-none">
+      {/* Mobile View Mode Switcher Bar (Visible on mobile/tablet under lg, always hidden in print) */}
+      <div className="lg:hidden print:hidden flex items-center justify-between px-3 py-1.5 bg-slate-900/90 border-b border-slate-800 text-xs shrink-0 select-none">
         <span className="text-[11px] font-medium text-slate-400 hidden xs:inline">Chế độ xem:</span>
         <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 shadow-inner w-full xs:w-auto justify-between xs:justify-start">
           <button

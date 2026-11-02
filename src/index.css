@@ -58,8 +58,10 @@
     color-adjust: exact !important;
   }
 
-  /* Hide the entire main workspace outside of the report modal */
+  /* Hide the entire main workspace and all non-report elements outside of the report modal */
+  body > #root > div > *:not(.report-modal-backdrop),
   body > #root > div > header,
+  body > #root > div > div.lg\:hidden,
   body > #root > div > div.flex-1,
   body > #root > div > footer,
   .print-hidden,

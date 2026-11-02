@@ -5,7 +5,7 @@ color 0b
 
 echo ===============================================================================
 echo            3D LIFT PLAN PRO (ENGINEERING V2.0) - LOCAL LAUNCHER
-echo   Hệ thống Mô phỏng 3D, Tính toán Sức nâng & Thuyết minh Biện pháp Cẩu
+echo   Hệ thống Mô phỏng 3D, Tính toán Sức nâng ^& Thuyết minh Biện pháp Cẩu
 echo   Tác giả: Nguyễn Đức Thắng - Hotline/Zalo: 0962.228.783
 echo ===============================================================================
 echo.

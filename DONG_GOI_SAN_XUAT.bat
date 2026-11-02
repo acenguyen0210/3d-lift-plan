@@ -4,7 +4,7 @@ title 3D LIFT PLAN PRO - Đóng gói & Chạy Bản Xuất Xưởng (Production)
 color 0a
 
 echo ===============================================================================
-echo       3D LIFT PLAN PRO - ĐÓNG GÓI & CHẠY BẢN PRODUCTION TỐI ƯU
+echo       3D LIFT PLAN PRO - ĐÓNG GÓI ^& CHẠY BẢN PRODUCTION TỐI ƯU
 echo   Tác giả: Nguyễn Đức Thắng - Hotline/Zalo: 0962.228.783
 echo ===============================================================================
 echo.
