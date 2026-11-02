@@ -1285,93 +1285,114 @@ export default function ThreeViewport({
                 onClick={() => setIsCameraMenuOpen(false)}
               />
               <div
-                className={`absolute left-0 top-full mt-1 backdrop-blur-md p-1.5 rounded-xl border shadow-2xl flex flex-col gap-1 min-w-[145px] z-50 animate-in fade-in duration-150 transition-colors ${
+                className={`absolute left-0 top-full mt-1 backdrop-blur-md p-2 rounded-xl border shadow-2xl flex flex-col gap-1.5 min-w-[210px] max-w-[230px] z-50 animate-in fade-in duration-150 transition-colors ${
                   isLight
                     ? 'bg-white/95 border-slate-300 text-slate-800'
                     : 'bg-slate-900/95 border-slate-700 text-slate-200'
                 }`}
               >
-              <button
-                type="button"
-                onClick={() => { setCameraPreset('3d'); setIsCameraMenuOpen(false); }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${
-                  activeCameraView === '3d'
-                    ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
-                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
-                }`}
-              >
-                <Compass size={13} /> 3D Tự do
-              </button>
-              <button
-                type="button"
-                onClick={() => { setCameraPreset('top'); setIsCameraMenuOpen(false); }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${
-                  activeCameraView === 'top'
-                    ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
-                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
-                }`}
-              >
-                <Layers size={13} /> Mặt bằng (Top)
-              </button>
-              <button
-                type="button"
-                onClick={() => { setCameraPreset('side'); setIsCameraMenuOpen(false); }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${
-                  activeCameraView === 'side'
-                    ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
-                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
-                }`}
-              >
-                <Sliders size={13} /> Mặt bên (Side)
-              </button>
-              <button
-                type="button"
-                onClick={() => { setCameraPreset('cab'); setIsCameraMenuOpen(false); }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${
-                  activeCameraView === 'cab'
-                    ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
-                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
-                }`}
-              >
-                <Eye size={13} /> Buồng lái
-              </button>
-              <button
-                type="button"
-                onClick={() => { setCameraPreset('load'); setIsCameraMenuOpen(false); }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${
-                  activeCameraView === 'load'
-                    ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
-                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
-                }`}
-              >
-                <Box size={13} /> Tải cẩu
-              </button>
-              <div className={`h-px my-0.5 ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`} />
-              <button
-                type="button"
-                onClick={() => { setIsGizmoActive(!isGizmoActive); setIsCameraMenuOpen(false); }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold text-left flex items-center gap-2 ${
-                  isGizmoActive
-                    ? 'bg-rose-600 text-white'
-                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
-                }`}
-              >
-                <Move3d size={13} /> {isGizmoActive ? 'Tắt kéo 3D' : 'Bật kéo 3D'}
-              </button>
-              <div className={`h-px my-0.5 ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`} />
-              <button
-                type="button"
-                onClick={() => { handleToggleTheme(); setIsCameraMenuOpen(false); }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold text-left flex items-center gap-2 cursor-pointer ${
-                  isLight
-                    ? 'text-slate-800 bg-slate-100 hover:bg-slate-200'
-                    : 'text-sky-300 bg-sky-950/70 hover:bg-sky-900/70'
-                }`}
-              >
-                {isLight ? <Moon size={13} className="text-slate-700 shrink-0" /> : <Sun size={13} className="text-amber-400 shrink-0" />}
-                <span>{isLight ? 'Nền Tối CAD' : 'Nền Sáng'}</span>
-              </button>
-            </div>
+                {/* Camera View Angle Presets in 2-Column Grid */}
+                <div className="text-[9px] font-bold text-slate-400 px-1 uppercase tracking-wider font-mono">
+                  Góc nhìn camera:
+                </div>
+                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => { setCameraPreset('3d'); setIsCameraMenuOpen(false); }}
+                    className={`px-2 py-1.5 rounded-lg font-medium text-left flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      activeCameraView === '3d'
+                        ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
+                        : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
+                    }`}
+                  >
+                    <Compass size={12} className="shrink-0" />
+                    <span className="truncate">3D Tự do</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setCameraPreset('top'); setIsCameraMenuOpen(false); }}
+                    className={`px-2 py-1.5 rounded-lg font-medium text-left flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      activeCameraView === 'top'
+                        ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
+                        : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
+                    }`}
+                  >
+                    <Layers size={12} className="shrink-0" />
+                    <span className="truncate">Mặt bằng</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setCameraPreset('side'); setIsCameraMenuOpen(false); }}
+                    className={`px-2 py-1.5 rounded-lg font-medium text-left flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      activeCameraView === 'side'
+                        ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
+                        : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
+                    }`}
+                  >
+                    <Sliders size={12} className="shrink-0" />
+                    <span className="truncate">Mặt bên</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setCameraPreset('cab'); setIsCameraMenuOpen(false); }}
+                    className={`px-2 py-1.5 rounded-lg font-medium text-left flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      activeCameraView === 'cab'
+                        ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
+                        : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
+                    }`}
+                  >
+                    <Eye size={12} className="shrink-0" />
+                    <span className="truncate">Buồng lái</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setCameraPreset('load'); setIsCameraMenuOpen(false); }}
+                    className={`col-span-2 px-2 py-1.5 rounded-lg font-medium text-left flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      activeCameraView === 'load'
+                        ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
+                        : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
+                    }`}
+                  >
+                    <Box size={12} className="shrink-0" />
+                    <span className="truncate">Bám sát tải cẩu</span>
+                  </button>
+                </div>
+
+                <div className={`h-px my-0.5 ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`} />
+
+                {/* Quick Utilities in 2-Column Grid */}
+                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => { setIsGizmoActive(!isGizmoActive); setIsCameraMenuOpen(false); }}
+                    className={`px-2 py-1.5 rounded-lg font-medium text-left flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      isGizmoActive
+                        ? 'bg-rose-600 text-white font-bold'
+                        : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
+                    }`}
+                  >
+                    <Move3d size={12} className="shrink-0" />
+                    <span className="truncate">{isGizmoActive ? 'Tắt kéo' : 'Kéo 3D'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { handleToggleTheme(); setIsCameraMenuOpen(false); }}
+                    className={`px-2 py-1.5 rounded-lg font-bold text-left flex items-center gap-1.5 cursor-pointer transition-colors ${
+                      isLight
+                        ? 'text-slate-800 bg-slate-100 hover:bg-slate-200'
+                        : 'text-sky-300 bg-sky-950/70 hover:bg-sky-900/70'
+                    }`}
+                  >
+                    {isLight ? <Moon size={12} className="text-slate-700 shrink-0" /> : <Sun size={12} className="text-amber-400 shrink-0" />}
+                    <span className="truncate">{isLight ? 'Nền Tối' : 'Nền Sáng'}</span>
+                  </button>
+                </div>
+              </div>
           </>
         )}
       </div>

@@ -806,7 +806,7 @@ export default function App() {
             relative overflow-hidden transition-all duration-200 lg:flex-1 lg:min-w-0 lg:h-full
             ${mobileViewMode === 'panel' ? 'hidden lg:block' : ''}
             ${mobileViewMode === '3d' ? 'flex-1 h-full' : ''}
-            ${mobileViewMode === 'split' ? 'h-[44vh] lg:h-full' : ''}
+            ${mobileViewMode === 'split' ? 'h-[44vh] min-h-[220px] shrink-0 lg:h-full lg:shrink' : ''}
             p-1.5 sm:p-2 lg:p-3
           `}
         >
