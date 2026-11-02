@@ -24,7 +24,8 @@ import {
   Video,
   ChevronDown,
   Sun,
-  Moon
+  Moon,
+  Sliders
 } from 'lucide-react';
 import WheelNumberInput from './WheelNumberInput';
 
@@ -1278,13 +1279,18 @@ export default function ThreeViewport({
           </button>
 
           {isCameraMenuOpen && (
-            <div
-              className={`absolute left-0 top-full mt-1 backdrop-blur-md p-1.5 rounded-xl border shadow-2xl flex flex-col gap-1 min-w-[140px] z-50 animate-in fade-in duration-150 transition-colors ${
-                isLight
-                  ? 'bg-white/95 border-slate-300 text-slate-800'
-                  : 'bg-slate-900/95 border-slate-700 text-slate-200'
-              }`}
-            >
+            <>
+              <div
+                className="fixed inset-0 z-40 bg-transparent"
+                onClick={() => setIsCameraMenuOpen(false)}
+              />
+              <div
+                className={`absolute left-0 top-full mt-1 backdrop-blur-md p-1.5 rounded-xl border shadow-2xl flex flex-col gap-1 min-w-[145px] z-50 animate-in fade-in duration-150 transition-colors ${
+                  isLight
+                    ? 'bg-white/95 border-slate-300 text-slate-800'
+                    : 'bg-slate-900/95 border-slate-700 text-slate-200'
+                }`}
+              >
               <button
                 type="button"
                 onClick={() => { setCameraPreset('3d'); setIsCameraMenuOpen(false); }}
@@ -1366,8 +1372,9 @@ export default function ThreeViewport({
                 <span>{isLight ? 'Nền Tối CAD' : 'Nền Sáng'}</span>
               </button>
             </div>
-          )}
-        </div>
+          </>
+        )}
+      </div>
 
         {/* Compact Mobile Telemetry Card */}
         <div
