@@ -321,11 +321,11 @@ export default function ObstacleManager({
               }`}
             >
               {/* Item Header */}
-              <div className="p-3 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              <div className="p-2.5 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                   <button
                     onClick={() => handleToggle(obs.id)}
-                    className="text-slate-400 hover:text-white transition-colors"
+                    className="text-slate-400 hover:text-white transition-colors shrink-0"
                     title={obs.enabled ? 'Ẩn vật cản' : 'Bật vật cản'}
                   >
                     {obs.enabled ? <Eye size={15} className="text-emerald-400" /> : <EyeOff size={15} />}
@@ -335,34 +335,23 @@ export default function ObstacleManager({
                     type="text"
                     value={obs.name}
                     onChange={(e) => handleUpdate(obs.id, 'name', e.target.value)}
-                    className="bg-transparent text-xs font-bold text-slate-100 focus:outline-none flex-1 truncate"
+                    className="bg-transparent text-xs font-semibold text-slate-100 focus:outline-none flex-1 min-w-0 truncate hover:text-sky-300 focus:text-white focus:bg-slate-900/80 px-1 py-0.5 rounded transition-all"
+                    title="Bấm vào để đổi tên vật cản"
                   />
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  <select
-                    value={obs.type}
-                    onChange={(e) => handleUpdate(obs.id, 'type', e.target.value)}
-                    className="bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-[11px] text-slate-300 focus:outline-none"
-                  >
-                    <option value="wall">Hàng rào vây (Fence)</option>
-                    <option value="workshop">Nhà xưởng thép (2 mái)</option>
-                    <option value="building">Tòa nhà / Khối hộp</option>
-                    <option value="power_pole">Cột điện cao thế</option>
-                    <option value="cylinder">Bồn tròn / Silo</option>
-                    <option value="trench">Hố móng</option>
-                  </select>
-
+                <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => setExpandedId(isExp ? null : obs.id)}
-                    className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800"
+                    className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition-colors"
+                    title={isExp ? 'Thu gọn chi tiết' : 'Mở rộng chỉnh kích thước & tọa độ'}
                   >
                     {isExp ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                   </button>
 
                   <button
                     onClick={() => handleDelete(obs.id)}
-                    className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800"
+                    className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition-colors"
                     title="Xóa vật cản này"
                   >
                     <Trash2 size={14} />
@@ -373,6 +362,24 @@ export default function ObstacleManager({
               {/* Expanded Property Controls */}
               {isExp && (
                 <div className="px-3 pb-3 pt-1 border-t border-slate-800/80 space-y-3 text-xs">
+                  {/* Obstacle Type Selector */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                      Loại hình học vật cản:
+                    </label>
+                    <select
+                      value={obs.type}
+                      onChange={(e) => handleUpdate(obs.id, 'type', e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                    >
+                      <option value="wall">Hàng rào vây công trường (Fence)</option>
+                      <option value="workshop">Nhà xưởng kết cấu thép (2 mái)</option>
+                      <option value="building">Tòa nhà / Khối hộp (Building)</option>
+                      <option value="power_pole">Cột điện cao thế (Power Pole)</option>
+                      <option value="cylinder">Bồn tròn / Silo chứa (Cylinder)</option>
+                      <option value="trench">Hố móng sâu (Trench / Pit)</option>
+                    </select>
+                  </div>
                   {/* Position Coordinates (X, Z, Rotation) - Only when not in multi-point wall mode */}
                   {!(obs.type === 'wall' && obs.wallMode !== 'single') && (
                     <div>

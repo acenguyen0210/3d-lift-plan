@@ -76,10 +76,10 @@ export default function LoadConfigurator({
             onChange={(e) => setLoadConfig({ ...loadConfig, type: e.target.value })}
             className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
           >
-            <option value="box">Khối hộp / Container / Máy móc</option>
-            <option value="tank">Bồn trụ nằm ngang (Horizontal Tank)</option>
-            <option value="vessel">Bình áp lực chỏm cầu (Pressure Vessel)</option>
-            <option value="cylinder">Ống thép công nghiệp (Pipe Spool)</option>
+            <option value="box">Khối hộp / Container</option>
+            <option value="tank">Bồn trụ nằm ngang</option>
+            <option value="vessel">Bình áp lực chỏm cầu</option>
+            <option value="cylinder">Ống thép công nghiệp</option>
           </select>
         </div>
       </div>
