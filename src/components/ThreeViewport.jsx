@@ -1610,22 +1610,26 @@ export default function ThreeViewport({
         )}
       </div>
 
-      {/* Floating Bottom Center: Outrigger Pressure Legend */}
+      {/* Floating Outrigger Pressure Legend (Right-aligned stacked above simulation toolbar) */}
       <div
-        className={`absolute bottom-4 left-1/2 -translate-x-1/2 backdrop-blur-sm px-3 py-1.5 rounded-full border text-[11px] flex items-center gap-4 pointer-events-none hidden md:flex transition-colors ${
+        className={`absolute bottom-16 sm:bottom-18 right-2 sm:right-4 z-20 backdrop-blur-md px-2.5 py-1 rounded-lg border text-[10px] sm:text-[11px] flex items-center gap-2.5 pointer-events-none hidden md:flex transition-colors select-none shadow-md ${
           isLight
-            ? 'bg-white/90 border-slate-300 text-slate-700 shadow-md'
-            : 'bg-slate-900/80 border-slate-800 text-slate-400'
+            ? 'bg-white/95 border-slate-300 text-slate-700 shadow-slate-200/50'
+            : 'bg-slate-900/90 border-slate-700/80 text-slate-300 shadow-black/40'
         }`}
       >
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Áp lực an toàn (&lt;85%)
+        <span className="font-semibold text-slate-400">Chân chống:</span>
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0 ring-1 ring-emerald-500/30" />
+          <span>An toàn (&lt;85%)</span>
         </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" /> Cảnh báo (85-100%)
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-amber-500 inline-block shrink-0 ring-1 ring-amber-500/30" />
+          <span>Cảnh báo (85-100%)</span>
         </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" /> Nguy cơ lún sụt (&gt;100%)
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-rose-500 inline-block shrink-0 ring-1 ring-rose-500/30" />
+          <span>Lún sụt (&gt;100%)</span>
         </span>
       </div>
     </div>
