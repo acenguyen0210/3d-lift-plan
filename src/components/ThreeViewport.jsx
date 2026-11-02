@@ -22,7 +22,9 @@ import {
   MapPin,
   RotateCw,
   Video,
-  ChevronDown
+  ChevronDown,
+  Sun,
+  Moon
 } from 'lucide-react';
 import WheelNumberInput from './WheelNumberInput';
 
@@ -62,7 +64,9 @@ export default function ThreeViewport({
   isSimulating,
   setIsSimulating,
   captureRef,
-  onOpenVideoModal
+  onOpenVideoModal,
+  viewportTheme = 'dark',
+  onToggleViewportTheme
 }) {
   const containerRef = useRef(null);
   const rendererRef = useRef(null);
@@ -78,6 +82,35 @@ export default function ThreeViewport({
   const groundMeshRef = useRef(null);
   const gridHelperRef = useRef(null);
   const currentGridSizeRef = useRef(120);
+  const hemiLightRef = useRef(null);
+  const dirLightRef = useRef(null);
+  const fillLightRef = useRef(null);
+  const compassRingMatRef = useRef(null);
+
+  const [localTheme, setLocalTheme] = useState(() => {
+    try {
+      return localStorage.getItem('3d_lift_plan_viewport_theme') || 'dark';
+    } catch (e) {
+      return 'dark';
+    }
+  });
+  const currentTheme = viewportTheme || localTheme;
+  const isLight = currentTheme === 'light';
+
+  const handleToggleTheme = () => {
+    if (onToggleViewportTheme) {
+      onToggleViewportTheme();
+    } else {
+      setLocalTheme((prev) => {
+        const next = prev === 'dark' ? 'light' : 'dark';
+        try {
+          localStorage.setItem('3d_lift_plan_viewport_theme', next);
+        } catch (e) {}
+        return next;
+      });
+    }
+  };
+
   const downCoordRef = useRef({ x: 0, y: 0 });
   const hoverCoordRef = useRef(null);
   const [pickCoordText, setPickCoordText] = useState(null);
@@ -123,8 +156,8 @@ export default function ThreeViewport({
 
     // 1. Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#0b1120'); // Dark slate high-tech engineering background
-    scene.fog = new THREE.FogExp2('#0b1120', 0.008);
+    scene.background = new THREE.Color(isLight ? '#f0f4f8' : '#0b1120'); // Light daylight vs Dark slate CAD background
+    scene.fog = new THREE.FogExp2(isLight ? '#f0f4f8' : '#0b1120', isLight ? 0.005 : 0.008);
     sceneRef.current = scene;
 
     // 2. Camera
@@ -161,10 +194,15 @@ export default function ThreeViewport({
     controlsRef.current = controls;
 
     // 5. Lighting
-    const hemiLight = new THREE.HemisphereLight('#bae6fd', '#1e293b', 0.85);
+    const hemiLight = new THREE.HemisphereLight(
+      isLight ? '#ffffff' : '#bae6fd',
+      isLight ? '#94a3b8' : '#1e293b',
+      isLight ? 1.1 : 0.85
+    );
     scene.add(hemiLight);
+    hemiLightRef.current = hemiLight;
 
-    const dirLight = new THREE.DirectionalLight('#ffffff', 1.8);
+    const dirLight = new THREE.DirectionalLight(isLight ? '#fffbeb' : '#ffffff', isLight ? 2.2 : 1.8);
     dirLight.position.set(30, 45, 25);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
@@ -178,18 +216,20 @@ export default function ThreeViewport({
     dirLight.shadow.camera.bottom = -shadowD;
     dirLight.shadow.bias = -0.0005;
     scene.add(dirLight);
+    dirLightRef.current = dirLight;
 
     // Subtle blue accent light
-    const fillLight = new THREE.DirectionalLight('#38bdf8', 0.5);
+    const fillLight = new THREE.DirectionalLight(isLight ? '#93c5fd' : '#38bdf8', isLight ? 0.55 : 0.5);
     fillLight.position.set(-25, 20, -20);
     scene.add(fillLight);
+    fillLightRef.current = fillLight;
 
     // 6. Ground & Grid
     const groundGeo = new THREE.PlaneGeometry(200, 200);
     groundGeo.rotateX(-Math.PI / 2);
     const groundMat = new THREE.MeshStandardMaterial({
-      color: '#0f172a',
-      roughness: 0.9,
+      color: isLight ? '#cbd5e1' : '#0f172a',
+      roughness: isLight ? 0.85 : 0.9,
       metalness: 0.1
     });
     const groundMesh = new THREE.Mesh(groundGeo, groundMat);
@@ -199,18 +239,24 @@ export default function ThreeViewport({
     groundMeshRef.current = groundMesh;
 
     // Engineering CAD Grid
-    const gridHelper = new THREE.GridHelper(120, 120, '#38bdf8', '#1e293b');
+    const gridCenterColor = isLight ? '#0284c7' : '#38bdf8';
+    const gridLineColor = isLight ? '#94a3b8' : '#1e293b';
+    const gridHelper = new THREE.GridHelper(120, 120, gridCenterColor, gridLineColor);
     gridHelper.position.y = 0;
     scene.add(gridHelper);
     gridHelperRef.current = gridHelper;
     currentGridSizeRef.current = 120;
 
     // Compass Labels on Ground (N, S, E, W)
+    const circleMat = new THREE.MeshBasicMaterial({
+      color: isLight ? '#64748b' : '#334155',
+      side: THREE.DoubleSide
+    });
+    compassRingMatRef.current = circleMat;
     const createCompass = () => {
       const compGroup = new THREE.Group();
       const circleGeo = new THREE.RingGeometry(24.8, 25.2, 64);
       circleGeo.rotateX(-Math.PI / 2);
-      const circleMat = new THREE.MeshBasicMaterial({ color: '#334155', side: THREE.DoubleSide });
       const ring = new THREE.Mesh(circleGeo, circleMat);
       compGroup.add(ring);
       scene.add(compGroup);
@@ -583,7 +629,9 @@ export default function ThreeViewport({
       }
 
       const divisions = requiredGridSize <= 200 ? requiredGridSize : Math.round(requiredGridSize / 2);
-      const newGrid = new THREE.GridHelper(requiredGridSize, divisions, '#38bdf8', '#1e293b');
+      const centerColor = isLight ? '#0284c7' : '#38bdf8';
+      const gridLineColor = isLight ? '#94a3b8' : '#1e293b';
+      const newGrid = new THREE.GridHelper(requiredGridSize, divisions, centerColor, gridLineColor);
       newGrid.position.y = 0;
       scene.add(newGrid);
       gridHelperRef.current = newGrid;
@@ -606,10 +654,67 @@ export default function ThreeViewport({
         cameraRef.current.updateProjectionMatrix();
       }
       if (scene.fog) {
-        scene.fog.density = Math.max(0.0015, 0.008 * (120 / requiredGridSize));
+        const baseDensity = isLight ? 0.005 : 0.008;
+        scene.fog.density = Math.max(0.0015, baseDensity * (120 / requiredGridSize));
       }
     }
-  }, [obstacles, boomLength, workingRadius, liftPoints]);
+  }, [obstacles, boomLength, workingRadius, liftPoints, isLight]);
+
+  // Dynamic 3D Viewport Theme Switching (Dark Mode vs Light Mode)
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    // 1. Background & Fog
+    scene.background = new THREE.Color(isLight ? '#f0f4f8' : '#0b1120');
+    scene.fog = new THREE.FogExp2(isLight ? '#f0f4f8' : '#0b1120', isLight ? 0.005 : 0.008);
+
+    // 2. Ground Material
+    if (groundMeshRef.current && groundMeshRef.current.material) {
+      groundMeshRef.current.material.color.set(isLight ? '#cbd5e1' : '#0f172a');
+      groundMeshRef.current.material.roughness = isLight ? 0.85 : 0.9;
+    }
+
+    // 3. Compass Ring
+    if (compassRingMatRef.current) {
+      compassRingMatRef.current.color.set(isLight ? '#64748b' : '#334155');
+    }
+
+    // 4. Lights
+    if (hemiLightRef.current) {
+      hemiLightRef.current.color.set(isLight ? '#ffffff' : '#bae6fd');
+      hemiLightRef.current.groundColor.set(isLight ? '#94a3b8' : '#1e293b');
+      hemiLightRef.current.intensity = isLight ? 1.1 : 0.85;
+    }
+    if (dirLightRef.current) {
+      dirLightRef.current.color.set(isLight ? '#fffbeb' : '#ffffff');
+      dirLightRef.current.intensity = isLight ? 2.2 : 1.8;
+    }
+    if (fillLightRef.current) {
+      fillLightRef.current.color.set(isLight ? '#93c5fd' : '#38bdf8');
+      fillLightRef.current.intensity = isLight ? 0.55 : 0.5;
+    }
+
+    // 5. Grid Helper Colors
+    if (gridHelperRef.current) {
+      const gridSize = currentGridSizeRef.current || 120;
+      const divisions = gridSize <= 200 ? gridSize : Math.round(gridSize / 2);
+      scene.remove(gridHelperRef.current);
+      gridHelperRef.current.geometry.dispose();
+      if (Array.isArray(gridHelperRef.current.material)) {
+        gridHelperRef.current.material.forEach((m) => m.dispose());
+      } else {
+        gridHelperRef.current.material.dispose();
+      }
+
+      const centerColor = isLight ? '#0284c7' : '#38bdf8';
+      const gridLineColor = isLight ? '#94a3b8' : '#1e293b';
+      const newGrid = new THREE.GridHelper(gridSize, divisions, centerColor, gridLineColor);
+      newGrid.position.y = 0;
+      scene.add(newGrid);
+      gridHelperRef.current = newGrid;
+    }
+  }, [currentTheme, isLight]);
 
   // Multi-Waypoint 3D Trajectory Curve & Spatial Markers
   useEffect(() => {
@@ -1051,7 +1156,11 @@ export default function ThreeViewport({
   }, [boomLength, loadElevation, captureRef]);
 
   return (
-    <div className="relative w-full h-full select-none overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl flex flex-col">
+    <div
+      className={`relative w-full h-full select-none overflow-hidden rounded-xl border shadow-2xl flex flex-col transition-colors duration-300 ${
+        isLight ? 'border-slate-300 bg-slate-100' : 'border-slate-700 bg-slate-950'
+      }`}
+    >
       {/* 3D Canvas Container */}
       <div
         ref={containerRef}
@@ -1096,39 +1205,49 @@ export default function ThreeViewport({
       {/* Top Overlay Bar: Desktop Mode (md and up) */}
       <div className="hidden md:flex absolute top-3 left-3 right-3 items-center justify-between pointer-events-none gap-2 z-20">
         {/* Crane & Model Tag */}
-        <div className="bg-slate-900/85 backdrop-blur-md px-3.5 py-2 rounded-lg border border-slate-700/80 shadow-lg flex items-center gap-3 pointer-events-auto">
+        <div
+          className={`backdrop-blur-md px-3.5 py-2 rounded-lg border shadow-lg flex items-center gap-3 pointer-events-auto transition-colors ${
+            isLight
+              ? 'bg-white/95 border-slate-300 text-slate-800'
+              : 'bg-slate-900/85 border-slate-700/80 text-slate-200'
+          }`}
+        >
           <div className="w-3 h-3 rounded-full animate-pulse shrink-0" style={{ backgroundColor: liftCategory.color }} />
           <div>
-            <div className="text-xs font-semibold text-slate-200 tracking-wide">{crane?.name || 'Chưa chọn cẩu'}</div>
-            <div className="text-[11px] text-slate-400 font-mono">
-              Bán kính: <span className="text-sky-400 font-bold">{workingRadius.toFixed(1)}m</span> | Góc cần:{' '}
-              <span className="text-amber-400 font-bold">{boomAngle.toFixed(1)}°</span> | Cần:{' '}
-              <span className="text-emerald-400 font-bold">{boomLength.toFixed(1)}m</span>
+            <div className={`text-xs font-semibold tracking-wide ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>
+              {crane?.name || 'Chưa chọn cẩu'}
+            </div>
+            <div className={`text-[11px] font-mono ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              Bán kính: <span className={isLight ? 'text-sky-700 font-bold' : 'text-sky-400 font-bold'}>{workingRadius.toFixed(1)}m</span> | Góc cần:{' '}
+              <span className={isLight ? 'text-amber-700 font-bold' : 'text-amber-400 font-bold'}>{boomAngle.toFixed(1)}°</span> | Cần:{' '}
+              <span className={isLight ? 'text-emerald-700 font-bold' : 'text-emerald-400 font-bold'}>{boomLength.toFixed(1)}m</span>
             </div>
           </div>
         </div>
 
         {/* Live Safety Lift Percentage Pill */}
         <div
-          className="px-4 py-2 rounded-lg backdrop-blur-md border shadow-lg flex items-center gap-3 pointer-events-auto shrink-0"
+          className="px-4 py-2 rounded-lg backdrop-blur-md border shadow-lg flex items-center gap-3 pointer-events-auto shrink-0 transition-colors"
           style={{
-            backgroundColor: liftCategory.bgColor,
+            backgroundColor: isLight ? '#fffffffa' : liftCategory.bgColor,
             borderColor: liftCategory.color
           }}
         >
           <div className="text-right">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300">Khả năng tải (Lift %)</div>
+            <div className={`text-[10px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-300'}`}>
+              Khả năng tải (Lift %)
+            </div>
             <div className="text-lg font-black font-mono tracking-tight" style={{ color: liftCategory.color }}>
               {liftPercentage > 0 ? `${liftPercentage.toFixed(1)}%` : 'NGOÀI BẢNG TẢI'}
             </div>
           </div>
-          <div className="h-8 w-px bg-slate-700/60" />
+          <div className={`h-8 w-px ${isLight ? 'bg-slate-300' : 'bg-slate-700/60'}`} />
           <div className="text-left text-xs font-mono">
-            <div className="text-slate-300">
-              Tổng tải: <span className="font-bold text-white">{grossLoad.toFixed(2)}t</span>
+            <div className={isLight ? 'text-slate-700' : 'text-slate-300'}>
+              Tổng tải: <span className={`font-bold ${isLight ? 'text-slate-950' : 'text-white'}`}>{grossLoad.toFixed(2)}t</span>
             </div>
-            <div className="text-slate-400 text-[11px]">
-              Tải cho phép: <span className="font-bold text-sky-300">{ratedCapacity.toFixed(2)}t</span>
+            <div className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+              Tải cho phép: <span className={`font-bold ${isLight ? 'text-sky-700' : 'text-sky-300'}`}>{ratedCapacity.toFixed(2)}t</span>
             </div>
           </div>
         </div>
@@ -1141,9 +1260,13 @@ export default function ThreeViewport({
           <button
             type="button"
             onClick={() => setIsCameraMenuOpen(!isCameraMenuOpen)}
-            className="bg-slate-900/95 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-slate-700/90 text-xs font-semibold text-slate-200 flex items-center gap-1.5 shadow-xl active:scale-95 transition-transform"
+            className={`backdrop-blur-md px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 shadow-xl active:scale-95 transition-all ${
+              isLight
+                ? 'bg-white/95 border-slate-300 text-slate-800'
+                : 'bg-slate-900/95 border-slate-700/90 text-slate-200'
+            }`}
           >
-            <Camera size={13} className="text-sky-400 shrink-0" />
+            <Camera size={13} className={isLight ? 'text-sky-600 shrink-0' : 'text-sky-400 shrink-0'} />
             <span>
               {activeCameraView === '3d' && '3D Tự do'}
               {activeCameraView === 'top' && 'Mặt bằng'}
@@ -1151,16 +1274,24 @@ export default function ThreeViewport({
               {activeCameraView === 'cab' && 'Buồng lái'}
               {activeCameraView === 'load' && 'Tải cẩu'}
             </span>
-            <ChevronDown size={12} className={`text-slate-400 transition-transform ${isCameraMenuOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={12} className={`${isLight ? 'text-slate-500' : 'text-slate-400'} transition-transform ${isCameraMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isCameraMenuOpen && (
-            <div className="absolute left-0 top-full mt-1 bg-slate-900/95 backdrop-blur-md p-1.5 rounded-xl border border-slate-700 shadow-2xl flex flex-col gap-1 min-w-[130px] z-50 animate-in fade-in duration-150">
+            <div
+              className={`absolute left-0 top-full mt-1 backdrop-blur-md p-1.5 rounded-xl border shadow-2xl flex flex-col gap-1 min-w-[140px] z-50 animate-in fade-in duration-150 transition-colors ${
+                isLight
+                  ? 'bg-white/95 border-slate-300 text-slate-800'
+                  : 'bg-slate-900/95 border-slate-700 text-slate-200'
+              }`}
+            >
               <button
                 type="button"
                 onClick={() => { setCameraPreset('3d'); setIsCameraMenuOpen(false); }}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${
-                  activeCameraView === '3d' ? 'bg-sky-500 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+                  activeCameraView === '3d'
+                    ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
+                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
                 }`}
               >
                 <Compass size={13} /> 3D Tự do
@@ -1169,7 +1300,9 @@ export default function ThreeViewport({
                 type="button"
                 onClick={() => { setCameraPreset('top'); setIsCameraMenuOpen(false); }}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${
-                  activeCameraView === 'top' ? 'bg-sky-500 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+                  activeCameraView === 'top'
+                    ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
+                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
                 }`}
               >
                 <Layers size={13} /> Mặt bằng (Top)
@@ -1178,7 +1311,9 @@ export default function ThreeViewport({
                 type="button"
                 onClick={() => { setCameraPreset('side'); setIsCameraMenuOpen(false); }}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${
-                  activeCameraView === 'side' ? 'bg-sky-500 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+                  activeCameraView === 'side'
+                    ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
+                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
                 }`}
               >
                 <Sliders size={13} /> Mặt bên (Side)
@@ -1187,7 +1322,9 @@ export default function ThreeViewport({
                 type="button"
                 onClick={() => { setCameraPreset('cab'); setIsCameraMenuOpen(false); }}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${
-                  activeCameraView === 'cab' ? 'bg-sky-500 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+                  activeCameraView === 'cab'
+                    ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
+                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
                 }`}
               >
                 <Eye size={13} /> Buồng lái
@@ -1196,40 +1333,63 @@ export default function ThreeViewport({
                 type="button"
                 onClick={() => { setCameraPreset('load'); setIsCameraMenuOpen(false); }}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${
-                  activeCameraView === 'load' ? 'bg-sky-500 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+                  activeCameraView === 'load'
+                    ? (isLight ? 'bg-sky-600 text-white font-bold' : 'bg-sky-500 text-white font-bold')
+                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
                 }`}
               >
                 <Box size={13} /> Tải cẩu
               </button>
-              <div className="h-px bg-slate-800 my-0.5" />
+              <div className={`h-px my-0.5 ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`} />
               <button
                 type="button"
                 onClick={() => { setIsGizmoActive(!isGizmoActive); setIsCameraMenuOpen(false); }}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-bold text-left flex items-center gap-2 ${
-                  isGizmoActive ? 'bg-rose-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                  isGizmoActive
+                    ? 'bg-rose-600 text-white'
+                    : (isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800')
                 }`}
               >
                 <Move3d size={13} /> {isGizmoActive ? 'Tắt kéo 3D' : 'Bật kéo 3D'}
+              </button>
+              <div className={`h-px my-0.5 ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`} />
+              <button
+                type="button"
+                onClick={() => { handleToggleTheme(); setIsCameraMenuOpen(false); }}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold text-left flex items-center gap-2 cursor-pointer ${
+                  isLight
+                    ? 'text-slate-800 bg-slate-100 hover:bg-slate-200'
+                    : 'text-sky-300 bg-sky-950/70 hover:bg-sky-900/70'
+                }`}
+              >
+                {isLight ? <Moon size={13} className="text-slate-700 shrink-0" /> : <Sun size={13} className="text-amber-400 shrink-0" />}
+                <span>{isLight ? 'Nền Tối CAD' : 'Nền Sáng'}</span>
               </button>
             </div>
           )}
         </div>
 
         {/* Compact Mobile Telemetry Card */}
-        <div className="bg-slate-900/90 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-700/80 shadow-lg text-[10px] font-mono pointer-events-auto text-right">
+        <div
+          className={`backdrop-blur-md px-2 py-1 rounded-lg border shadow-lg text-[10px] font-mono pointer-events-auto text-right transition-colors ${
+            isLight
+              ? 'bg-white/95 border-slate-300 text-slate-800'
+              : 'bg-slate-900/90 border-slate-700/80 text-slate-200'
+          }`}
+        >
           <div className="flex items-center gap-1 justify-end">
-            <span className="text-slate-400">R:</span>
-            <b className="text-sky-400">{workingRadius.toFixed(1)}m</b>
-            <span className="text-slate-600">|</span>
-            <span className="text-slate-400">Góc:</span>
-            <b className="text-amber-400">{boomAngle.toFixed(0)}°</b>
-            <span className="text-slate-600">|</span>
-            <span className="text-slate-400">Cần:</span>
-            <b className="text-emerald-400">{boomLength.toFixed(0)}m</b>
+            <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>R:</span>
+            <b className={isLight ? 'text-sky-700' : 'text-sky-400'}>{workingRadius.toFixed(1)}m</b>
+            <span className={isLight ? 'text-slate-300' : 'text-slate-600'}>|</span>
+            <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Góc:</span>
+            <b className={isLight ? 'text-amber-700' : 'text-amber-400'}>{boomAngle.toFixed(0)}°</b>
+            <span className={isLight ? 'text-slate-300' : 'text-slate-600'}>|</span>
+            <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Cần:</span>
+            <b className={isLight ? 'text-emerald-700' : 'text-emerald-400'}>{boomLength.toFixed(0)}m</b>
           </div>
           <div className="flex items-center gap-1 justify-end text-[9px] mt-0.5">
-            <span className="text-slate-400">
-              Tải: <b className="text-slate-200">{grossLoad.toFixed(1)}t</b> / <b className="text-sky-300">{ratedCapacity.toFixed(1)}t</b>
+            <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>
+              Tải: <b className={isLight ? 'text-slate-900' : 'text-slate-200'}>{grossLoad.toFixed(1)}t</b> / <b className={isLight ? 'text-sky-700' : 'text-sky-300'}>{ratedCapacity.toFixed(1)}t</b>
             </span>
             <span
               className="px-1 py-0.2 rounded font-bold ml-1"
@@ -1246,8 +1406,18 @@ export default function ThreeViewport({
 
       {/* Floating Camera View Switcher Buttons */}
       {/* Desktop Mode (md and up): docked on left side */}
-      <div className="hidden md:flex absolute left-3 top-20 z-30 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700/80 shadow-2xl flex-col gap-1 pointer-events-auto min-w-[110px]">
-        <div className="text-[9px] font-bold text-slate-400 px-2 py-0.5 uppercase tracking-wider font-mono border-b border-slate-800 text-center select-none">
+      <div
+        className={`hidden md:flex absolute left-3 top-20 z-30 backdrop-blur-md p-1.5 rounded-xl border shadow-2xl flex-col gap-1 pointer-events-auto min-w-[110px] transition-colors ${
+          isLight
+            ? 'bg-white/95 border-slate-300 text-slate-800'
+            : 'bg-slate-900/90 border-slate-700/80 text-slate-200'
+        }`}
+      >
+        <div
+          className={`text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider font-mono border-b text-center select-none ${
+            isLight ? 'text-slate-500 border-slate-200' : 'text-slate-400 border-slate-800'
+          }`}
+        >
           Góc nhìn
         </div>
         <button
@@ -1255,8 +1425,8 @@ export default function ThreeViewport({
           title="Góc nhìn 3D Tự do"
           className={`w-full px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeCameraView === '3d'
-              ? 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/25'
-              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+              ? (isLight ? 'bg-sky-600 text-white font-bold shadow-md shadow-sky-600/30' : 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/25')
+              : (isLight ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-950' : 'text-slate-300 hover:bg-slate-800 hover:text-white')
           }`}
         >
           <Camera size={14} className="shrink-0" />
@@ -1267,8 +1437,8 @@ export default function ThreeViewport({
           title="Góc nhìn mặt bằng (Plan View CAD)"
           className={`w-full px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeCameraView === 'top'
-              ? 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/25'
-              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+              ? (isLight ? 'bg-sky-600 text-white font-bold shadow-md shadow-sky-600/30' : 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/25')
+              : (isLight ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-950' : 'text-slate-300 hover:bg-slate-800 hover:text-white')
           }`}
         >
           <Compass size={14} className="shrink-0" />
@@ -1279,8 +1449,8 @@ export default function ThreeViewport({
           title="Góc nhìn mặt cắt đứng (Elevation View)"
           className={`w-full px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeCameraView === 'side'
-              ? 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/25'
-              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+              ? (isLight ? 'bg-sky-600 text-white font-bold shadow-md shadow-sky-600/30' : 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/25')
+              : (isLight ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-950' : 'text-slate-300 hover:bg-slate-800 hover:text-white')
           }`}
         >
           <Layers size={14} className="shrink-0" />
@@ -1291,8 +1461,8 @@ export default function ThreeViewport({
           title="Góc nhìn buồng lái thợ cẩu"
           className={`w-full px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeCameraView === 'cab'
-              ? 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/25'
-              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+              ? (isLight ? 'bg-sky-600 text-white font-bold shadow-md shadow-sky-600/30' : 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/25')
+              : (isLight ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-950' : 'text-slate-300 hover:bg-slate-800 hover:text-white')
           }`}
         >
           <Eye size={14} className="shrink-0" />
@@ -1303,15 +1473,15 @@ export default function ThreeViewport({
           title="Góc nhìn bám sát tải cẩu"
           className={`w-full px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             activeCameraView === 'load'
-              ? 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/25'
-              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+              ? (isLight ? 'bg-sky-600 text-white font-bold shadow-md shadow-sky-600/30' : 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/25')
+              : (isLight ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-950' : 'text-slate-300 hover:bg-slate-800 hover:text-white')
           }`}
         >
           <Box size={14} className="shrink-0" />
           <span>Tải cẩu</span>
         </button>
 
-        <div className="h-px bg-slate-700/60 my-0.5" />
+        <div className={`h-px my-0.5 ${isLight ? 'bg-slate-200' : 'bg-slate-700/60'}`} />
 
         <button
           onClick={() => setIsGizmoActive(!isGizmoActive)}
@@ -1319,20 +1489,60 @@ export default function ThreeViewport({
           className={`w-full px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
             isGizmoActive
               ? 'bg-rose-600 text-white shadow-lg animate-pulse'
-              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+              : (isLight ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-950' : 'text-slate-300 hover:bg-slate-800 hover:text-white')
           }`}
         >
           <Move3d size={14} className="shrink-0" />
           <span>{isGizmoActive ? 'Đang kéo 3D' : 'Kéo chuột'}</span>
         </button>
+
+        <div className={`h-px my-0.5 ${isLight ? 'bg-slate-200' : 'bg-slate-700/60'}`} />
+
+        {/* 3D Viewport Theme Toggle (Light / Dark) */}
+        <button
+          type="button"
+          onClick={handleToggleTheme}
+          title={isLight ? 'Chuyển sang Chế độ Nền Tối CAD (Dark Mode)' : 'Chuyển sang Chế độ Nền Sáng Ban ngày (Light Mode)'}
+          className={`w-full px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+            isLight
+              ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 shadow-sm'
+              : 'bg-sky-950/70 hover:bg-sky-900/70 text-sky-300 border border-sky-800/60 shadow-sm'
+          }`}
+        >
+          {isLight ? (
+            <>
+              <Moon size={14} className="text-slate-700 shrink-0" />
+              <span>Nền Tối CAD</span>
+            </>
+          ) : (
+            <>
+              <Sun size={14} className="text-amber-400 shrink-0" />
+              <span>Nền Sáng</span>
+            </>
+          )}
+        </button>
       </div>
 
       {/* Trajectory Simulation & Play Controls + Real-Time Load Rotation */}
-      <div className="absolute bottom-2.5 sm:bottom-4 right-2 sm:right-4 z-30 bg-slate-900/95 backdrop-blur-md p-1 sm:p-1.5 rounded-xl border border-slate-700/80 shadow-2xl flex items-center gap-1 sm:gap-2 shrink-0 max-w-[calc(100%-1rem)] pointer-events-auto">
+      <div
+        className={`absolute bottom-2.5 sm:bottom-4 right-2 sm:right-4 z-30 backdrop-blur-md p-1 sm:p-1.5 rounded-xl border shadow-2xl flex items-center gap-1 sm:gap-2 shrink-0 max-w-[calc(100%-1rem)] pointer-events-auto transition-colors ${
+          isLight
+            ? 'bg-white/95 border-slate-300 text-slate-800'
+            : 'bg-slate-900/95 border-slate-700/80 text-slate-200'
+        }`}
+      >
         {/* Real-time Direct Load Rotation Quick Control */}
-        <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-950/70 border border-slate-700/60 rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs">
-          <RotateCw size={12} className="text-emerald-400 shrink-0" />
-          <span className="text-[11px] text-slate-300 font-medium hidden sm:inline">Xoay tải:</span>
+        <div
+          className={`flex items-center gap-1 sm:gap-1.5 border rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs transition-colors ${
+            isLight
+              ? 'bg-slate-100 border-slate-300 text-slate-800'
+              : 'bg-slate-950/70 border-slate-700/60 text-slate-200'
+          }`}
+        >
+          <RotateCw size={12} className={isLight ? 'text-emerald-600 shrink-0' : 'text-emerald-400 shrink-0'} />
+          <span className={`text-[11px] font-medium hidden sm:inline ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+            Xoay tải:
+          </span>
           <WheelNumberInput
             value={loadRotation || 0}
             onChange={(val) => {
@@ -1343,7 +1553,11 @@ export default function ThreeViewport({
             step={5}
             wrapAround={true}
             unit="°"
-            className="w-12 sm:w-14 bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-[11px] sm:text-xs text-emerald-400 font-mono font-bold text-center focus:border-emerald-500"
+            className={`w-12 sm:w-14 border rounded px-1 py-0.5 text-[11px] sm:text-xs font-mono font-bold text-center focus:border-emerald-500 ${
+              isLight
+                ? 'bg-white border-slate-300 text-emerald-700'
+                : 'bg-slate-900 border-slate-700 text-emerald-400'
+            }`}
           />
           <div className="hidden sm:flex items-center gap-0.5">
             {[0, 90, 180, 270].map((deg) => (
@@ -1353,10 +1567,14 @@ export default function ThreeViewport({
                 onClick={() => {
                   if (setLoadRotation) setLoadRotation(deg);
                 }}
-                className={`text-[9px] font-mono px-1 py-0.5 rounded border transition-colors ${
+                className={`text-[9px] font-mono px-1 py-0.5 rounded border transition-colors cursor-pointer ${
                   (loadRotation || 0) === deg
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
-                    : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'
+                    ? (isLight
+                        ? 'bg-emerald-600 text-white border-emerald-600 font-bold'
+                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold')
+                    : (isLight
+                        ? 'bg-white text-slate-600 border-slate-300 hover:text-slate-900'
+                        : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300')
                 }`}
               >
                 {deg}°
@@ -1393,7 +1611,13 @@ export default function ThreeViewport({
       </div>
 
       {/* Floating Bottom Center: Outrigger Pressure Legend */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-800 text-[11px] text-slate-400 flex items-center gap-4 pointer-events-none hidden md:flex">
+      <div
+        className={`absolute bottom-4 left-1/2 -translate-x-1/2 backdrop-blur-sm px-3 py-1.5 rounded-full border text-[11px] flex items-center gap-4 pointer-events-none hidden md:flex transition-colors ${
+          isLight
+            ? 'bg-white/90 border-slate-300 text-slate-700 shadow-md'
+            : 'bg-slate-900/80 border-slate-800 text-slate-400'
+        }`}
+      >
         <span className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Áp lực an toàn (&lt;85%)
         </span>

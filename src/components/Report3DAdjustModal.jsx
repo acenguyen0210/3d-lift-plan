@@ -13,7 +13,9 @@ import {
   CheckCircle,
   X,
   RotateCcw,
-  Maximize2
+  Maximize2,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export default function Report3DAdjustModal({
@@ -47,6 +49,15 @@ export default function Report3DAdjustModal({
   const animFrameRef = useRef(null);
   const craneBuilderRef = useRef(null);
   const obstacleBuilderRef = useRef(null);
+
+  const [modalTheme, setModalTheme] = useState(() => {
+    try {
+      return localStorage.getItem('3d_lift_plan_viewport_theme') || 'dark';
+    } catch (e) {
+      return 'dark';
+    }
+  });
+  const isLight = modalTheme === 'light';
 
   const [activePreset, setActivePreset] = useState(defaultPreset);
 
@@ -99,7 +110,7 @@ export default function Report3DAdjustModal({
 
     // 1. Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#0b1120');
+    scene.background = new THREE.Color(isLight ? '#f0f4f8' : '#0b1120');
     sceneRef.current = scene;
 
     // 2. Camera
@@ -143,15 +154,19 @@ export default function Report3DAdjustModal({
     controlsRef.current = controls;
 
     // 5. Lighting
-    const hemiLight = new THREE.HemisphereLight('#bae6fd', '#334155', 1.0);
+    const hemiLight = new THREE.HemisphereLight(
+      isLight ? '#ffffff' : '#bae6fd',
+      isLight ? '#94a3b8' : '#334155',
+      isLight ? 1.15 : 1.0
+    );
     scene.add(hemiLight);
 
-    const dirLight = new THREE.DirectionalLight('#ffffff', 2.0);
+    const dirLight = new THREE.DirectionalLight(isLight ? '#fffbeb' : '#ffffff', isLight ? 2.3 : 2.0);
     dirLight.position.set(30, 45, 25);
     dirLight.castShadow = true;
     scene.add(dirLight);
 
-    const fillLight = new THREE.DirectionalLight('#38bdf8', 0.8);
+    const fillLight = new THREE.DirectionalLight(isLight ? '#93c5fd' : '#38bdf8', isLight ? 0.6 : 0.8);
     fillLight.position.set(-25, 20, -20);
     scene.add(fillLight);
 
@@ -159,8 +174,8 @@ export default function Report3DAdjustModal({
     const groundGeo = new THREE.PlaneGeometry(240, 240);
     groundGeo.rotateX(-Math.PI / 2);
     const groundMat = new THREE.MeshStandardMaterial({
-      color: '#0f172a',
-      roughness: 0.9,
+      color: isLight ? '#cbd5e1' : '#0f172a',
+      roughness: isLight ? 0.85 : 0.9,
       metalness: 0.1
     });
     const groundMesh = new THREE.Mesh(groundGeo, groundMat);
@@ -168,7 +183,9 @@ export default function Report3DAdjustModal({
     groundMesh.position.y = -0.01;
     scene.add(groundMesh);
 
-    const gridHelper = new THREE.GridHelper(120, 120, '#38bdf8', '#1e293b');
+    const gridCenter = isLight ? '#0284c7' : '#38bdf8';
+    const gridLines = isLight ? '#94a3b8' : '#1e293b';
+    const gridHelper = new THREE.GridHelper(120, 120, gridCenter, gridLines);
     gridHelper.position.y = 0;
     scene.add(gridHelper);
 
@@ -285,7 +302,7 @@ export default function Report3DAdjustModal({
         } catch (e) {}
       }
     };
-  }, [isOpen]);
+  }, [isOpen, modalTheme]);
 
   const handleCaptureAndSave = () => {
     if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
@@ -409,13 +426,29 @@ export default function Report3DAdjustModal({
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setCameraPreset(defaultPreset)}
-            className="text-slate-400 hover:text-slate-200 text-[11px] flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <RotateCcw size={12} /> Đặt lại
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setModalTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer ${
+                isLight
+                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
+                  : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700'
+              }`}
+              title="Chuyển đổi nền ảnh chụp: Nền Sáng / Nền Tối CAD"
+            >
+              {isLight ? <Moon size={12} className="text-slate-700" /> : <Sun size={12} className="text-amber-400" />}
+              <span>{isLight ? 'Nền Tối CAD' : 'Nền Sáng'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCameraPreset(defaultPreset)}
+              className="text-slate-400 hover:text-slate-200 text-[11px] flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <RotateCcw size={12} /> Đặt lại
+            </button>
+          </div>
         </div>
 
         {/* 3D Interactive Canvas Container with definite height */}

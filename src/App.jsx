@@ -27,7 +27,9 @@ import {
   MoreVertical,
   ChevronDown,
   Eye,
-  Camera
+  Camera,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 import { DEFAULT_CRANES } from './data/defaultCranes';
@@ -146,6 +148,25 @@ export default function App() {
     if (pt.loadRotation !== undefined) {
       setLoadRotation(pt.loadRotation);
     }
+  };
+
+  // 3D Viewport Theme ('dark' = CAD Dark, 'light' = Daylight White)
+  const [viewportTheme, setViewportTheme] = useState(() => {
+    try {
+      return localStorage.getItem('3d_lift_plan_viewport_theme') || 'dark';
+    } catch (e) {
+      return 'dark';
+    }
+  });
+
+  const handleToggleViewportTheme = () => {
+    setViewportTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      try {
+        localStorage.setItem('3d_lift_plan_viewport_theme', next);
+      } catch (e) {}
+      return next;
+    });
   };
 
   // Modals
@@ -606,6 +627,25 @@ export default function App() {
                 className="hidden"
               />
             </label>
+
+            {/* 3D Viewport Theme Quick Toggle (Light / Dark) */}
+            <button
+              onClick={handleToggleViewportTheme}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              title={viewportTheme === 'light' ? 'Chuyển sang 3D Nền Tối CAD (Dark Mode)' : 'Chuyển sang 3D Nền Sáng Ban ngày (Light Mode)'}
+            >
+              {viewportTheme === 'light' ? (
+                <>
+                  <Moon size={14} className="text-sky-400 shrink-0" />
+                  <span className="hidden xl:inline">3D: Nền Tối</span>
+                </>
+              ) : (
+                <>
+                  <Sun size={14} className="text-amber-400 shrink-0" />
+                  <span className="hidden xl:inline">3D: Nền Sáng</span>
+                </>
+              )}
+            </button>
           </div>
 
           {/* Primary Action Buttons */}
@@ -684,6 +724,20 @@ export default function App() {
                     className="hidden"
                   />
                 </label>
+                <button
+                  onClick={() => {
+                    handleToggleViewportTheme();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-xs text-left text-slate-200 hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
+                >
+                  {viewportTheme === 'light' ? (
+                    <Moon size={14} className="text-sky-400 shrink-0" />
+                  ) : (
+                    <Sun size={14} className="text-amber-400 shrink-0" />
+                  )}
+                  <span>3D: {viewportTheme === 'light' ? 'Nền Tối CAD' : 'Nền Sáng Ban ngày'}</span>
+                </button>
                 <div className="h-px bg-slate-800 my-0.5" />
                 <button
                   onClick={() => {
@@ -864,6 +918,8 @@ export default function App() {
             setIsSimulating={setIsSimulating}
             captureRef={viewportRef}
             onOpenVideoModal={() => setIsVideoModalOpen(true)}
+            viewportTheme={viewportTheme}
+            onToggleViewportTheme={handleToggleViewportTheme}
           />
         </div>
 
