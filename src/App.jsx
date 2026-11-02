@@ -912,6 +912,7 @@ export default function App() {
             pickingFencePoint={pickingFencePoint}
             setPickingFencePoint={setPickingFencePoint}
             liftPoints={liftPoints}
+            setLiftPoints={setLiftPoints}
             pickPoint={pickPoint}
             setPoint={setPoint}
             isSimulating={isSimulating}

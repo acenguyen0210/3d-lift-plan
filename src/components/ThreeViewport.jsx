@@ -25,7 +25,13 @@ import {
   ChevronDown,
   Sun,
   Moon,
-  Sliders
+  Sliders,
+  Building2,
+  Factory,
+  Zap,
+  Disc,
+  Fence,
+  X
 } from 'lucide-react';
 import WheelNumberInput from './WheelNumberInput';
 
@@ -60,6 +66,7 @@ export default function ThreeViewport({
   pickingFencePoint,
   setPickingFencePoint,
   liftPoints = [],
+  setLiftPoints,
   pickPoint,
   setPoint,
   isSimulating,
@@ -144,6 +151,76 @@ export default function ThreeViewport({
   const [activeCameraView, setActiveCameraView] = useState('3d'); // '3d', 'top', 'side', 'cab', 'load'
   const [isCameraMenuOpen, setIsCameraMenuOpen] = useState(false);
   const [isGizmoActive, setIsGizmoActive] = useState(false);
+  const [activeDragTarget, setActiveDragTarget] = useState({
+    type: 'load', // 'load' | 'obstacle' | 'waypoint'
+    id: 'load',
+    name: 'Kiện tải cẩu'
+  });
+  const [isTargetMenuOpen, setIsTargetMenuOpen] = useState(false);
+  const [gizmoMode, setGizmoMode] = useState('translate'); // 'translate' | 'rotate'
+  const activeDragTargetRef = useRef(activeDragTarget);
+  const gizmoModeRef = useRef(gizmoMode);
+  const obstaclesRef = useRef(obstacles);
+  const setObstaclesRef = useRef(setObstacles);
+  const liftPointsRef = useRef(liftPoints);
+  const setLiftPointsRef = useRef(setLiftPoints);
+  const setLoadRotationRef = useRef(setLoadRotation);
+  const dragStartPosRef = useRef({ x: 0, z: 0 });
+  const initialBoundaryPointsRef = useRef([]);
+
+  useEffect(() => {
+    activeDragTargetRef.current = activeDragTarget;
+  }, [activeDragTarget]);
+
+  useEffect(() => {
+    gizmoModeRef.current = gizmoMode;
+  }, [gizmoMode]);
+
+  useEffect(() => {
+    obstaclesRef.current = obstacles;
+    setObstaclesRef.current = setObstacles;
+    liftPointsRef.current = liftPoints;
+    setLiftPointsRef.current = setLiftPoints;
+    setLoadRotationRef.current = setLoadRotation;
+  }, [obstacles, setObstacles, liftPoints, setLiftPoints, setLoadRotation]);
+
+  const getObstacleIcon = (type, size = 13, className = '') => {
+    switch (type) {
+      case 'cylinder':
+        return <Disc size={size} className={className || 'text-cyan-400 shrink-0'} />;
+      case 'power_pole':
+        return <Zap size={size} className={className || 'text-amber-400 shrink-0'} />;
+      case 'workshop':
+        return <Factory size={size} className={className || 'text-emerald-400 shrink-0'} />;
+      case 'wall':
+        return <Fence size={size} className={className || 'text-blue-400 shrink-0'} />;
+      case 'trench':
+        return <AlertTriangle size={size} className={className || 'text-rose-400 shrink-0'} />;
+      case 'building':
+      default:
+        return <Building2 size={size} className={className || 'text-indigo-400 shrink-0'} />;
+    }
+  };
+
+  const handleRotateTarget = (deltaDeg = 45) => {
+    if (activeDragTarget.type === 'obstacle') {
+      const obsId = activeDragTarget.id;
+      if (setObstaclesRef.current) {
+        setObstaclesRef.current((prev) =>
+          prev.map((o) => {
+            if (o.id !== obsId) return o;
+            const nextRot = ((o.rotationY || 0) + deltaDeg) % 360;
+            return { ...o, rotationY: nextRot };
+          })
+        );
+      }
+    } else if (activeDragTarget.type === 'load') {
+      if (setLoadRotationRef.current) {
+        setLoadRotationRef.current(((loadRotationRef.current || 0) + deltaDeg) % 360);
+      }
+    }
+  };
+
   const [showGrid, setShowGrid] = useState(true);
   const [showClearance, setShowClearance] = useState(true);
   const [simulationProgress, setSimulationProgress] = useState(0);
@@ -341,13 +418,43 @@ export default function ThreeViewport({
       if (controlsRef.current) {
         controlsRef.current.enabled = !event.value;
       }
+      if (event.value && dummyTargetRef.current) {
+        dragStartPosRef.current = {
+          x: dummyTargetRef.current.position.x,
+          z: dummyTargetRef.current.position.z
+        };
+        const currentTarget = activeDragTargetRef.current;
+        if (currentTarget?.type === 'obstacle') {
+          const obs = (obstaclesRef.current || []).find((o) => o.id === currentTarget.id);
+          if (obs?.boundaryPoints) {
+            initialBoundaryPointsRef.current = JSON.parse(JSON.stringify(obs.boundaryPoints));
+          }
+        }
+      }
     });
 
     tc.addEventListener('change', () => {
-      if (tc.dragging && dummyTargetRef.current) {
-        const x = dummyTargetRef.current.position.x;
-        const z = dummyTargetRef.current.position.z;
-        const y = dummyTargetRef.current.position.y;
+      if (!tc.dragging || !dummyTargetRef.current) return;
+
+      const currentTarget = activeDragTargetRef.current;
+      const x = dummyTargetRef.current.position.x;
+      const z = dummyTargetRef.current.position.z;
+      const y = dummyTargetRef.current.position.y;
+      const isRotateMode = tc.mode === 'rotate';
+
+      // ----------------------------------------------------
+      // CASE 1: CRANE LOAD
+      // ----------------------------------------------------
+      if (!currentTarget || currentTarget.type === 'load') {
+        if (isRotateMode) {
+          let rotDeg = Math.round((dummyTargetRef.current.rotation.y * 180) / Math.PI);
+          while (rotDeg < 0) rotDeg += 360;
+          while (rotDeg >= 360) rotDeg -= 360;
+          if (setLoadRotationRef.current) {
+            setLoadRotationRef.current(rotDeg);
+          }
+          return;
+        }
 
         const currentCrane = craneRef.current;
         const currentBoomLength = boomLengthRef.current || 20.0;
@@ -439,6 +546,111 @@ export default function ThreeViewport({
         }
         if (setLoadElevationRef.current) {
           setLoadElevationRef.current(Math.round(finalElevation * 10) / 10);
+        }
+      }
+
+      // ----------------------------------------------------
+      // CASE 2: OBSTACLE / SITE STRUCTURE
+      // ----------------------------------------------------
+      else if (currentTarget.type === 'obstacle') {
+        const obsList = obstaclesRef.current || [];
+        const obs = obsList.find((o) => o.id === currentTarget.id);
+        if (!obs) return;
+
+        if (isRotateMode) {
+          let rotDeg = Math.round((dummyTargetRef.current.rotation.y * 180) / Math.PI);
+          while (rotDeg < 0) rotDeg += 360;
+          while (rotDeg >= 360) rotDeg -= 360;
+          if (setObstaclesRef.current) {
+            setObstaclesRef.current((prev) =>
+              prev.map((o) => (o.id === obs.id ? { ...o, rotationY: rotDeg } : o))
+            );
+          }
+          if (obstacleBuilderRef.current?.obstaclesGroup) {
+            const meshGroup = obstacleBuilderRef.current.obstaclesGroup.children.find(
+              (c) => c.name === obs.id
+            );
+            if (meshGroup) {
+              meshGroup.rotation.y = dummyTargetRef.current.rotation.y;
+            }
+          }
+          return;
+        }
+
+        // Translate mode
+        const newX = Math.round(x * 10) / 10;
+        const newZ = Math.round(z * 10) / 10;
+
+        // Keep dummy target Y pinned at obstacle mid-height
+        dummyTargetRef.current.position.y = (obs.height || 10.0) * 0.5;
+
+        // Multi-point fence
+        if (obs.type === 'wall' && obs.boundaryPoints && obs.boundaryPoints.length >= 2) {
+          const totalDx = x - dragStartPosRef.current.x;
+          const totalDz = z - dragStartPosRef.current.z;
+          const initialPts = initialBoundaryPointsRef.current || [];
+          if (initialPts.length > 0 && setObstaclesRef.current) {
+            setObstaclesRef.current((prev) =>
+              prev.map((o) => {
+                if (o.id !== obs.id) return o;
+                return {
+                  ...o,
+                  boundaryPoints: initialPts.map((p) => ({
+                    ...p,
+                    x: Math.round((p.x + totalDx) * 10) / 10,
+                    z: Math.round((p.z + totalDz) * 10) / 10
+                  }))
+                };
+              })
+            );
+          }
+        } else {
+          // Standard obstacle
+          if (setObstaclesRef.current) {
+            setObstaclesRef.current((prev) =>
+              prev.map((o) => (o.id === obs.id ? { ...o, posX: newX, posZ: newZ } : o))
+            );
+          }
+          if (obstacleBuilderRef.current?.obstaclesGroup) {
+            const meshGroup = obstacleBuilderRef.current.obstaclesGroup.children.find(
+              (c) => c.name === obs.id
+            );
+            if (meshGroup) {
+              meshGroup.position.set(newX, 0, newZ);
+            }
+          }
+        }
+      }
+
+      // ----------------------------------------------------
+      // CASE 3: WAYPOINT (PICK, SET, AVOIDANCE POINT)
+      // ----------------------------------------------------
+      else if (currentTarget.type === 'waypoint') {
+        let r = Math.hypot(x, z);
+        r = Math.max(1.5, Math.min(65.0, Math.round(r * 10) / 10));
+
+        let worldAngle = (Math.atan2(z, x) * 180) / Math.PI;
+        if (worldAngle < 0) worldAngle += 360;
+        let s = worldAngle - (craneHeadingRef.current || 0);
+        while (s < 0) s += 360;
+        while (s >= 360) s -= 360;
+        s = Math.round(s);
+
+        const loadH = loadConfigRef.current?.dims?.h || 2.6;
+        const elev = Math.max(0.2, Math.round((y - loadH * 0.5) * 10) / 10);
+
+        if (setLiftPointsRef.current) {
+          setLiftPointsRef.current((prev) =>
+            prev.map((pt, idx) => {
+              if (
+                pt.id === currentTarget.id ||
+                (currentTarget.index !== undefined && idx === currentTarget.index)
+              ) {
+                return { ...pt, radius: r, slew: s, elevation: elev };
+              }
+              return pt;
+            })
+          );
         }
       }
     });
@@ -847,6 +1059,12 @@ export default function ThreeViewport({
       });
       const sphere = new THREE.Mesh(sphereGeo, sphereMat);
       sphere.position.copy(pos);
+      sphere.userData = {
+        isWaypoint: true,
+        pointId: pt.id || `pt-${idx}`,
+        pointIndex: idx,
+        pointName: pt.name || `Điểm ${idx + 1}`
+      };
       group.add(sphere);
 
       // Outer halo ring around waypoint sphere
@@ -855,6 +1073,7 @@ export default function ThreeViewport({
       const haloMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
       const halo = new THREE.Mesh(haloGeo, haloMat);
       halo.position.copy(pos);
+      halo.userData = sphere.userData;
       group.add(halo);
 
       // Vertical plumb drop line to ground
@@ -903,18 +1122,260 @@ export default function ThreeViewport({
     }
   }, [isGizmoActive]);
 
-  // Sync Dummy Target position when not actively dragging
+  // Update TransformControls Mode & Constraints based on Target & Mode
   useEffect(() => {
-    if (!transformControlsRef.current?.dragging && dummyTargetRef.current) {
+    const tc = transformControlsRef.current;
+    if (!tc) return;
+
+    tc.setMode(gizmoMode);
+
+    if (gizmoMode === 'rotate') {
+      tc.showX = false;
+      tc.showY = true;
+      tc.showZ = false;
+    } else {
+      if (activeDragTarget?.type === 'obstacle') {
+        tc.showX = true;
+        tc.showY = false;
+        tc.showZ = true;
+      } else {
+        tc.showX = true;
+        tc.showY = true;
+        tc.showZ = true;
+      }
+    }
+  }, [gizmoMode, activeDragTarget]);
+
+  // Sync Dummy Target position & rotation when not actively dragging
+  useEffect(() => {
+    if (transformControlsRef.current?.dragging || !dummyTargetRef.current) return;
+
+    const target = activeDragTarget;
+    const loadH = loadConfig?.dims?.h || 2.6;
+
+    if (!target || target.type === 'load') {
       const sRad = ((slewAngle + (craneHeading || 0)) * Math.PI) / 180;
-      const loadH = loadConfig?.dims?.h || 2.6;
       dummyTargetRef.current.position.set(
         workingRadius * Math.cos(sRad),
         (loadElevation !== undefined ? loadElevation : 1.5) + loadH * 0.5,
         workingRadius * Math.sin(sRad)
       );
+      dummyTargetRef.current.rotation.set(0, ((loadRotation || 0) * Math.PI) / 180, 0);
+    } else if (target.type === 'obstacle') {
+      const obs = (obstacles || []).find((o) => o.id === target.id);
+      if (obs) {
+        if (obs.type === 'wall' && obs.boundaryPoints && obs.boundaryPoints.length >= 2) {
+          let avgX = 0;
+          let avgZ = 0;
+          obs.boundaryPoints.forEach((p) => {
+            avgX += p.x;
+            avgZ += p.z;
+          });
+          avgX /= obs.boundaryPoints.length;
+          avgZ /= obs.boundaryPoints.length;
+          dummyTargetRef.current.position.set(avgX, (obs.height || 2.8) * 0.5, avgZ);
+          dummyTargetRef.current.rotation.set(0, 0, 0);
+        } else {
+          const obsH = obs.height || 10.0;
+          dummyTargetRef.current.position.set(obs.posX || 0, obsH * 0.5, obs.posZ || 0);
+          dummyTargetRef.current.rotation.set(0, ((obs.rotationY || 0) * Math.PI) / 180, 0);
+        }
+      }
+    } else if (target.type === 'waypoint') {
+      const pt =
+        (liftPoints || []).find((p) => p.id === target.id) ||
+        (liftPoints || [])[target.index || 0];
+      if (pt) {
+        const sRad = (((pt.slew || 0) + (craneHeading || 0)) * Math.PI) / 180;
+        dummyTargetRef.current.position.set(
+          pt.radius * Math.cos(sRad),
+          (pt.elevation !== undefined ? pt.elevation : 1.5) + loadH * 0.5,
+          pt.radius * Math.sin(sRad)
+        );
+        dummyTargetRef.current.rotation.set(0, 0, 0);
+      }
     }
-  }, [workingRadius, slewAngle, loadElevation, loadConfig?.dims?.h, craneHeading]);
+  }, [
+    activeDragTarget,
+    workingRadius,
+    slewAngle,
+    loadElevation,
+    loadRotation,
+    loadConfig?.dims?.h,
+    craneHeading,
+    obstacles,
+    liftPoints
+  ]);
+
+  // Interactive 3D Click Selection & Cursor Hover Feedback (Raycasting on Load, Obstacles, Waypoints)
+  useEffect(() => {
+    if (!rendererRef.current || !cameraRef.current || !sceneRef.current) return;
+    const dom = rendererRef.current.domElement;
+    if (!dom) return;
+
+    const pointerDownCoord = { x: 0, y: 0 };
+
+    const handlePointerDown = (e) => {
+      pointerDownCoord.x = e.clientX;
+      pointerDownCoord.y = e.clientY;
+    };
+
+    const handlePointerMove = (e) => {
+      if (pickingFencePoint || transformControlsRef.current?.dragging) return;
+      const camera = cameraRef.current;
+      if (!camera) return;
+
+      const rect = dom.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      let isHovered = false;
+
+      // 1. Hover check waypoints
+      if (trajectoryGroupRef.current) {
+        const hits = raycaster.intersectObjects(trajectoryGroupRef.current.children, true);
+        if (
+          hits.some((h) => {
+            let cur = h.object;
+            while (cur && cur !== trajectoryGroupRef.current) {
+              if (cur.userData?.isWaypoint) return true;
+              cur = cur.parent;
+            }
+            return false;
+          })
+        ) {
+          isHovered = true;
+        }
+      }
+
+      // 2. Hover check load / hook
+      if (!isHovered && craneBuilderRef.current) {
+        const loadObjs = [
+          craneBuilderRef.current.loadGroup,
+          craneBuilderRef.current.hookGroup
+        ].filter(Boolean);
+        if (raycaster.intersectObjects(loadObjs, true).length > 0) {
+          isHovered = true;
+        }
+      }
+
+      // 3. Hover check obstacles
+      if (!isHovered && obstacleBuilderRef.current?.obstaclesGroup) {
+        if (
+          raycaster.intersectObjects(obstacleBuilderRef.current.obstaclesGroup.children, true)
+            .length > 0
+        ) {
+          isHovered = true;
+        }
+      }
+
+      dom.style.cursor = isHovered ? 'pointer' : 'default';
+    };
+
+    const handlePointerUp = (e) => {
+      if (pickingFencePoint || transformControlsRef.current?.dragging) return;
+      const dx = Math.abs(e.clientX - pointerDownCoord.x);
+      const dy = Math.abs(e.clientY - pointerDownCoord.y);
+      if (dx > 6 || dy > 6) return; // Orbit/pan drag, not a direct click
+
+      const camera = cameraRef.current;
+      if (!camera) return;
+
+      const rect = dom.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      // 1. Check Waypoint markers in trajectoryGroup
+      if (trajectoryGroupRef.current) {
+        const hits = raycaster.intersectObjects(trajectoryGroupRef.current.children, true);
+        for (const hit of hits) {
+          let obj = hit.object;
+          while (obj && !obj.userData?.isWaypoint && obj !== trajectoryGroupRef.current) {
+            obj = obj.parent;
+          }
+          if (obj && obj.userData?.isWaypoint) {
+            const { pointId, pointIndex, pointName } = obj.userData;
+            setActiveDragTarget({
+              type: 'waypoint',
+              id: pointId,
+              index: pointIndex,
+              name: pointName
+            });
+            setIsGizmoActive(true);
+            return;
+          }
+        }
+      }
+
+      // 2. Check Load / Hook
+      if (craneBuilderRef.current) {
+        const loadObjs = [
+          craneBuilderRef.current.loadGroup,
+          craneBuilderRef.current.hookGroup
+        ].filter(Boolean);
+        const hits = raycaster.intersectObjects(loadObjs, true);
+        if (hits.length > 0) {
+          setActiveDragTarget({
+            type: 'load',
+            id: 'load',
+            name: 'Kiện tải cẩu'
+          });
+          setIsGizmoActive(true);
+          return;
+        }
+      }
+
+      // 3. Check Obstacles in obstaclesGroup
+      if (obstacleBuilderRef.current?.obstaclesGroup) {
+        const hits = raycaster.intersectObjects(
+          obstacleBuilderRef.current.obstaclesGroup.children,
+          true
+        );
+        if (hits.length > 0) {
+          let topObsGroup = hits[0].object;
+          while (
+            topObsGroup &&
+            topObsGroup.parent &&
+            topObsGroup.parent !== obstacleBuilderRef.current.obstaclesGroup
+          ) {
+            topObsGroup = topObsGroup.parent;
+          }
+          if (topObsGroup && topObsGroup.name) {
+            const obs = (obstaclesRef.current || []).find((o) => o.id === topObsGroup.name);
+            if (obs) {
+              setActiveDragTarget({
+                type: 'obstacle',
+                id: obs.id,
+                name: obs.name || 'Vật cản'
+              });
+              setIsGizmoActive(true);
+              return;
+            }
+          }
+        }
+      }
+    };
+
+    dom.addEventListener('pointerdown', handlePointerDown);
+    dom.addEventListener('pointermove', handlePointerMove);
+    dom.addEventListener('pointerup', handlePointerUp);
+
+    return () => {
+      dom.removeEventListener('pointerdown', handlePointerDown);
+      dom.removeEventListener('pointermove', handlePointerMove);
+      dom.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [pickingFencePoint]);
 
   // Interactive Mouse Picking for Fence Boundary Points on 3D Ground
   useEffect(() => {
@@ -1431,6 +1892,335 @@ export default function ThreeViewport({
           </div>
         </div>
       </div>
+
+      {/* Floating 3D Drag Target Selector HUD Banner */}
+      {isGizmoActive && (
+        <div
+          className={`absolute top-12 sm:top-3.5 left-1/2 -translate-x-1/2 z-35 backdrop-blur-md px-2 sm:px-3 py-1.5 rounded-xl border shadow-2xl flex items-center gap-1.5 sm:gap-2 max-w-[calc(100%-1rem)] pointer-events-auto transition-colors ${
+            isLight
+              ? 'bg-white/95 border-rose-300 text-slate-800 shadow-rose-900/10'
+              : 'bg-slate-900/95 border-rose-500/50 text-slate-100 shadow-black/70'
+          }`}
+        >
+          {/* Target Selector Dropdown Button */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsTargetMenuOpen(!isTargetMenuOpen)}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                isLight
+                  ? 'bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100'
+                  : 'bg-rose-950/60 border-rose-500/60 text-rose-200 hover:bg-rose-900/60'
+              }`}
+              title="Nhấp để đổi đối tượng kéo chuột 3D (Tải cẩu, Vật cản, Điểm cẩu)"
+            >
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse inline-block" />
+              {activeDragTarget.type === 'load' && <Box size={13} className="text-sky-400 shrink-0" />}
+              {activeDragTarget.type === 'waypoint' && <MapPin size={13} className="text-amber-400 shrink-0" />}
+              {activeDragTarget.type === 'obstacle' &&
+                getObstacleIcon(obstacles.find((o) => o.id === activeDragTarget.id)?.type, 13)}
+              <span className="max-w-[110px] sm:max-w-[170px] truncate text-[11px] sm:text-xs">
+                {activeDragTarget.type === 'load'
+                  ? 'Kiện tải cẩu'
+                  : activeDragTarget.type === 'obstacle'
+                  ? obstacles.find((o) => o.id === activeDragTarget.id)?.name || activeDragTarget.name
+                  : liftPoints.find((p) => p.id === activeDragTarget.id)?.name || activeDragTarget.name}
+              </span>
+              <ChevronDown
+                size={12}
+                className={`transition-transform shrink-0 ${isTargetMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isTargetMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40 bg-transparent"
+                  onClick={() => setIsTargetMenuOpen(false)}
+                />
+                <div
+                  className={`absolute top-full left-0 sm:left-1/2 sm:-translate-x-1/2 mt-1.5 w-64 sm:w-80 max-h-84 overflow-y-auto rounded-xl border shadow-2xl z-50 p-1.5 flex flex-col gap-1 text-xs backdrop-blur-md transition-colors ${
+                    isLight
+                      ? 'bg-white border-slate-300 text-slate-800 shadow-slate-400/30'
+                      : 'bg-slate-900 border-slate-700 text-slate-200 shadow-black/80'
+                  }`}
+                >
+                  <div
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 font-mono border-b ${
+                      isLight ? 'text-slate-500 border-slate-200' : 'text-slate-400 border-slate-800'
+                    }`}
+                  >
+                    Chọn đối tượng kéo chuột 3D
+                  </div>
+
+                  {/* 1. Kiện tải */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveDragTarget({ type: 'load', id: 'load', name: 'Kiện tải cẩu' });
+                      setIsTargetMenuOpen(false);
+                    }}
+                    className={`w-full px-2 py-1.5 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer ${
+                      activeDragTarget.type === 'load'
+                        ? isLight
+                          ? 'bg-rose-100 text-rose-900 font-bold'
+                          : 'bg-rose-950/70 text-rose-200 font-bold border border-rose-500/40'
+                        : isLight
+                        ? 'hover:bg-slate-100 text-slate-700'
+                        : 'hover:bg-slate-800 text-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Box size={13} className="text-sky-400 shrink-0" />
+                      <span className="truncate font-medium">Kiện tải cẩu</span>
+                    </div>
+                    <span className="text-[10px] font-mono opacity-60 ml-2 shrink-0">
+                      R:{workingRadius.toFixed(1)}m | {Math.round(slewAngle)}°
+                    </span>
+                  </button>
+
+                  {/* 2. Danh sách Vật cản & Công trình */}
+                  <div
+                    className={`text-[9px] font-bold uppercase tracking-wider px-2 pt-1.5 pb-0.5 font-mono ${
+                      isLight ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    Vật cản &amp; Công trình ({obstacles.length})
+                  </div>
+                  {obstacles.map((obs) => {
+                    const isSelected = activeDragTarget.type === 'obstacle' && activeDragTarget.id === obs.id;
+                    return (
+                      <button
+                        key={obs.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveDragTarget({
+                            type: 'obstacle',
+                            id: obs.id,
+                            name: obs.name || 'Vật cản'
+                          });
+                          setIsTargetMenuOpen(false);
+                        }}
+                        className={`w-full px-2 py-1.5 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer ${
+                          isSelected
+                            ? isLight
+                              ? 'bg-rose-100 text-rose-900 font-bold'
+                              : 'bg-rose-950/70 text-rose-200 font-bold border border-rose-500/40'
+                            : isLight
+                            ? 'hover:bg-slate-100 text-slate-700'
+                            : 'hover:bg-slate-800 text-slate-300'
+                        } ${!obs.enabled ? 'opacity-40' : ''}`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {getObstacleIcon(obs.type, 13)}
+                          <span className="truncate">{obs.name}</span>
+                          {!obs.enabled && <span className="text-[9px] text-slate-500">(Ẩn)</span>}
+                        </div>
+                        <span className="text-[10px] font-mono opacity-60 ml-2 shrink-0">
+                          X:{(obs.posX || 0).toFixed(1)}m, Z:{(obs.posZ || 0).toFixed(1)}m
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                  {/* 3. Danh sách Điểm cẩu quỹ đạo */}
+                  {liftPoints && liftPoints.length > 0 && (
+                    <>
+                      <div
+                        className={`text-[9px] font-bold uppercase tracking-wider px-2 pt-1.5 pb-0.5 font-mono ${
+                          isLight ? 'text-slate-400' : 'text-slate-500'
+                        }`}
+                      >
+                        Điểm cẩu quỹ đạo ({liftPoints.length})
+                      </div>
+                      {liftPoints.map((pt, idx) => {
+                        const isSelected =
+                          activeDragTarget.type === 'waypoint' &&
+                          (activeDragTarget.id === pt.id || activeDragTarget.index === idx);
+                        return (
+                          <button
+                            key={pt.id || idx}
+                            type="button"
+                            onClick={() => {
+                              setActiveDragTarget({
+                                type: 'waypoint',
+                                id: pt.id,
+                                index: idx,
+                                name: pt.name || `Điểm ${idx + 1}`
+                              });
+                              setIsTargetMenuOpen(false);
+                            }}
+                            className={`w-full px-2 py-1.5 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer ${
+                              isSelected
+                                ? isLight
+                                  ? 'bg-rose-100 text-rose-900 font-bold'
+                                : 'bg-rose-950/70 text-rose-200 font-bold border border-rose-500/40'
+                                : isLight
+                                ? 'hover:bg-slate-100 text-slate-700'
+                                : 'hover:bg-slate-800 text-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <MapPin size={13} className="text-amber-400 shrink-0" />
+                              <span className="truncate">{pt.name || `Điểm ${idx + 1}`}</span>
+                            </div>
+                            <span className="text-[10px] font-mono opacity-60 ml-2 shrink-0">
+                              R:{(pt.radius || 0).toFixed(1)}m | {Math.round(pt.slew || 0)}°
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Coordinates readout badge */}
+          <div
+            className={`hidden sm:flex items-center gap-1 font-mono text-[11px] px-2 py-0.5 rounded border ${
+              isLight
+                ? 'bg-slate-100 border-slate-200 text-slate-700'
+                : 'bg-slate-950/60 border-slate-800 text-slate-300'
+            }`}
+          >
+            {activeDragTarget.type === 'load' && (
+              <>
+                <span className="opacity-70">R:</span>
+                <b className={isLight ? 'text-sky-700' : 'text-sky-400'}>{workingRadius.toFixed(1)}m</b>
+                <span className="opacity-30">|</span>
+                <span className="opacity-70">Góc:</span>
+                <b className={isLight ? 'text-amber-700' : 'text-amber-400'}>{Math.round(slewAngle)}°</b>
+                <span className="opacity-30">|</span>
+                <span className="opacity-70">Cao:</span>
+                <b className={isLight ? 'text-emerald-700' : 'text-emerald-400'}>{(loadElevation || 0).toFixed(1)}m</b>
+              </>
+            )}
+            {activeDragTarget.type === 'obstacle' && (() => {
+              const currentObs = obstacles.find((o) => o.id === activeDragTarget.id);
+              if (!currentObs) return null;
+              return (
+                <>
+                  <span className="opacity-70">X:</span>
+                  <b className={isLight ? 'text-sky-700' : 'text-sky-400'}>{(currentObs.posX || 0).toFixed(1)}m</b>
+                  <span className="opacity-30">|</span>
+                  <span className="opacity-70">Z:</span>
+                  <b className={isLight ? 'text-sky-700' : 'text-sky-400'}>{(currentObs.posZ || 0).toFixed(1)}m</b>
+                  <span className="opacity-30">|</span>
+                  <span className="opacity-70">Góc:</span>
+                  <b className={isLight ? 'text-amber-700' : 'text-amber-400'}>{Math.round(currentObs.rotationY || 0)}°</b>
+                </>
+              );
+            })()}
+            {activeDragTarget.type === 'waypoint' && (() => {
+              const currentPt =
+                liftPoints.find((p) => p.id === activeDragTarget.id) ||
+                liftPoints[activeDragTarget.index || 0];
+              if (!currentPt) return null;
+              return (
+                <>
+                  <span className="opacity-70">R:</span>
+                  <b className={isLight ? 'text-sky-700' : 'text-sky-400'}>{(currentPt.radius || 0).toFixed(1)}m</b>
+                  <span className="opacity-30">|</span>
+                  <span className="opacity-70">Góc:</span>
+                  <b className={isLight ? 'text-amber-700' : 'text-amber-400'}>{Math.round(currentPt.slew || 0)}°</b>
+                  <span className="opacity-30">|</span>
+                  <span className="opacity-70">Cao:</span>
+                  <b className={isLight ? 'text-emerald-700' : 'text-emerald-400'}>{(currentPt.elevation || 0).toFixed(1)}m</b>
+                </>
+              );
+            })()}
+          </div>
+
+          {/* Gizmo Mode Toggle (Translate vs Rotate) */}
+          <div
+            className={`flex items-center rounded-lg border p-0.5 text-[11px] ${
+              isLight ? 'bg-slate-100 border-slate-300' : 'bg-slate-950/80 border-slate-800'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => setGizmoMode('translate')}
+              title="Chế độ di chuyển (Mũi tên X, Z, Y)"
+              className={`px-1.5 py-0.5 rounded flex items-center gap-1 font-medium transition-colors cursor-pointer ${
+                gizmoMode === 'translate'
+                  ? 'bg-rose-600 text-white font-bold shadow-sm'
+                  : isLight
+                  ? 'text-slate-600 hover:bg-slate-200'
+                  : 'text-slate-400 hover:bg-slate-800'
+              }`}
+            >
+              <Move3d size={11} className="shrink-0" />
+              <span className="hidden sm:inline">Dời</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setGizmoMode('rotate')}
+              title="Chế độ xoay góc 3D"
+              className={`px-1.5 py-0.5 rounded flex items-center gap-1 font-medium transition-colors cursor-pointer ${
+                gizmoMode === 'rotate'
+                  ? 'bg-rose-600 text-white font-bold shadow-sm'
+                  : isLight
+                  ? 'text-slate-600 hover:bg-slate-200'
+                  : 'text-slate-400 hover:bg-slate-800'
+              }`}
+            >
+              <RotateCw size={11} className="shrink-0" />
+              <span className="hidden sm:inline">Xoay</span>
+            </button>
+          </div>
+
+          {/* Quick Rotate +45° Button (Obstacles & Load) */}
+          {(activeDragTarget.type === 'obstacle' || activeDragTarget.type === 'load') && (
+            <button
+              type="button"
+              onClick={() => handleRotateTarget(45)}
+              title="Xoay nhanh +45° quanh trục thẳng đứng"
+              className={`px-1.5 py-0.5 rounded border text-[11px] font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                isLight
+                  ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-emerald-700'
+                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-emerald-400'
+              }`}
+            >
+              <RotateCw size={10} className="shrink-0" />
+              <span>+45°</span>
+            </button>
+          )}
+
+          {/* Quick Return to Load button if obstacle or waypoint is active */}
+          {activeDragTarget.type !== 'load' && (
+            <button
+              type="button"
+              onClick={() => setActiveDragTarget({ type: 'load', id: 'load', name: 'Kiện tải cẩu' })}
+              title="Chuyển nhanh về Kiện tải cẩu"
+              className={`hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] cursor-pointer transition-colors ${
+                isLight
+                  ? 'bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100'
+                  : 'bg-sky-950/50 border-sky-800/60 text-sky-300 hover:bg-sky-900/50'
+              }`}
+            >
+              <Box size={11} className="shrink-0" />
+              <span>Về Tải</span>
+            </button>
+          )}
+
+          {/* Close Gizmo Button */}
+          <button
+            type="button"
+            onClick={() => setIsGizmoActive(false)}
+            title="Tắt kéo chuột 3D (Đóng Gizmo)"
+            className={`p-1 rounded-lg transition-colors cursor-pointer ${
+              isLight
+                ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <X size={13} className="shrink-0" />
+          </button>
+        </div>
+      )}
 
       {/* Floating Camera View Switcher Buttons */}
       {/* Desktop Mode (md and up): docked on left side */}
