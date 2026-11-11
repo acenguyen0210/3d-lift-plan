@@ -28,9 +28,11 @@ export default function Report3DAdjustModal({
   boomLength = 23,
   workingRadius = 8,
   slewAngle = 35,
+  craneHeading = 0,
   boomAngle = 60,
   hookElevation = 6,
   loadElevation = 1.5,
+  loadRotation = 0,
   loadConfig,
   riggingConfig,
   outriggerReactions,
@@ -38,6 +40,7 @@ export default function Report3DAdjustModal({
   matLength = 2.2,
   matWidth = 2.2,
   obstacles = [],
+  liftPoints = [],
   onSaveView,
   onSwitchToExternal
 }) {
@@ -49,6 +52,13 @@ export default function Report3DAdjustModal({
   const animFrameRef = useRef(null);
   const craneBuilderRef = useRef(null);
   const obstacleBuilderRef = useRef(null);
+  const trajectoryGroupRef = useRef(null);
+  const groundMeshRef = useRef(null);
+  const gridHelperRef = useRef(null);
+  const currentGridSizeRef = useRef(120);
+  const hemiLightRef = useRef(null);
+  const dirLightRef = useRef(null);
+  const fillLightRef = useRef(null);
 
   const [modalTheme, setModalTheme] = useState(() => {
     try {
@@ -58,12 +68,20 @@ export default function Report3DAdjustModal({
     }
   });
   const isLight = modalTheme === 'light';
+  const isLightRef = useRef(isLight);
+  isLightRef.current = isLight;
 
   const [activePreset, setActivePreset] = useState(defaultPreset);
 
-  // Synchronize activePreset whenever defaultPreset changes on opening
+  // Sync theme and activePreset whenever modal opens or defaultPreset changes
   useEffect(() => {
-    setActivePreset(defaultPreset);
+    if (isOpen) {
+      setActivePreset(defaultPreset);
+      try {
+        const saved = localStorage.getItem('3d_lift_plan_viewport_theme');
+        if (saved) setModalTheme(saved);
+      } catch (e) {}
+    }
   }, [defaultPreset, isOpen]);
 
   const setCameraPreset = (view) => {
@@ -71,6 +89,7 @@ export default function Report3DAdjustModal({
     const cam = cameraRef.current;
     const ctrl = controlsRef.current;
     setActivePreset(view);
+    cam.up.set(0, 1, 0);
 
     switch (view) {
       case 'top':
@@ -80,25 +99,44 @@ export default function Report3DAdjustModal({
         break;
       case 'side':
         cam.position.set(0.1, Math.max(boomLength * 0.35, 10), Math.max(boomLength * 1.05, 28));
-        ctrl.target.set(0, 7, 0);
+        ctrl.target.set(0, Math.max(boomLength * 0.25, 7), 0);
         break;
       case 'front':
         cam.position.set(Math.max(boomLength * 1.05, 28), Math.max(boomLength * 0.35, 10), 0.1);
-        ctrl.target.set(0, 7, 0);
+        ctrl.target.set(0, Math.max(boomLength * 0.25, 7), 0);
         break;
-      case 'load':
-        cam.position.set(workingRadius + 4, (loadElevation || 1.5) + 2, 4);
-        ctrl.target.set(workingRadius, loadElevation || 1.5, 0);
+      case 'load': {
+        if (craneBuilderRef.current?.loadGroup) {
+          const lp = craneBuilderRef.current.loadGroup.position;
+          const totalSlewRad = (-((craneHeading || 0) + (slewAngle || 0)) * Math.PI) / 180;
+          const camOffsetX = 5.5 * Math.cos(totalSlewRad + Math.PI / 3);
+          const camOffsetZ = 5.5 * Math.sin(totalSlewRad + Math.PI / 3);
+          cam.position.set(lp.x + camOffsetX, lp.y + 3.0, lp.z + camOffsetZ);
+          ctrl.target.set(lp.x, lp.y + 1.2, lp.z);
+        } else {
+          const totalRad = (((craneHeading || 0) + (slewAngle || 0)) * Math.PI) / 180;
+          const lx = workingRadius * Math.cos(totalRad);
+          const lz = workingRadius * Math.sin(totalRad);
+          const ly = (loadElevation !== undefined ? loadElevation : 1.5) + (loadConfig?.dims?.h || 2.6) * 0.5;
+          cam.position.set(lx + 4.5, ly + 2.5, lz + 4.5);
+          ctrl.target.set(lx, ly, lz);
+        }
         break;
+      }
       case '3d':
-      default:
-        cam.position.set(18, 14, 22);
-        ctrl.target.set(0, 5, 0);
+      case 'iso':
+      case 'current':
+      default: {
+        const isoDist = Math.max(boomLength * 0.85, 24);
+        cam.position.set(isoDist * 0.72, isoDist * 0.55, isoDist * 0.78);
+        ctrl.target.set(0, Math.min((loadElevation !== undefined ? loadElevation : 1.5) + 2, 8), 0);
         break;
+      }
     }
     ctrl.update();
   };
 
+  // Setup Three.js WebGL Scene when modal opens
   useEffect(() => {
     if (!isOpen) return;
 
@@ -107,10 +145,12 @@ export default function Report3DAdjustModal({
 
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 480;
+    const lightMode = isLightRef.current;
 
     // 1. Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(isLight ? '#f0f4f8' : '#0b1120');
+    scene.background = new THREE.Color(lightMode ? '#f0f4f8' : '#0b1120');
+    scene.fog = new THREE.FogExp2(lightMode ? '#f0f4f8' : '#0b1120', lightMode ? 0.005 : 0.008);
     sceneRef.current = scene;
 
     // 2. Camera
@@ -155,92 +195,58 @@ export default function Report3DAdjustModal({
 
     // 5. Lighting
     const hemiLight = new THREE.HemisphereLight(
-      isLight ? '#ffffff' : '#bae6fd',
-      isLight ? '#94a3b8' : '#334155',
-      isLight ? 1.15 : 1.0
+      lightMode ? '#ffffff' : '#bae6fd',
+      lightMode ? '#94a3b8' : '#334155',
+      lightMode ? 1.15 : 1.0
     );
     scene.add(hemiLight);
+    hemiLightRef.current = hemiLight;
 
-    const dirLight = new THREE.DirectionalLight(isLight ? '#fffbeb' : '#ffffff', isLight ? 2.3 : 2.0);
+    const dirLight = new THREE.DirectionalLight(lightMode ? '#fffbeb' : '#ffffff', lightMode ? 2.3 : 2.0);
     dirLight.position.set(30, 45, 25);
     dirLight.castShadow = true;
     scene.add(dirLight);
+    dirLightRef.current = dirLight;
 
-    const fillLight = new THREE.DirectionalLight(isLight ? '#93c5fd' : '#38bdf8', isLight ? 0.6 : 0.8);
+    const fillLight = new THREE.DirectionalLight(lightMode ? '#93c5fd' : '#38bdf8', lightMode ? 0.6 : 0.8);
     fillLight.position.set(-25, 20, -20);
     scene.add(fillLight);
+    fillLightRef.current = fillLight;
 
-    // 6. Ground & CAD Grid
+    // 6. Ground & CAD Grid (dynamically sized to fit crane + obstacles + liftPoints)
     const groundGeo = new THREE.PlaneGeometry(240, 240);
     groundGeo.rotateX(-Math.PI / 2);
     const groundMat = new THREE.MeshStandardMaterial({
-      color: isLight ? '#cbd5e1' : '#0f172a',
-      roughness: isLight ? 0.85 : 0.9,
+      color: lightMode ? '#cbd5e1' : '#0f172a',
+      roughness: lightMode ? 0.85 : 0.9,
       metalness: 0.1
     });
     const groundMesh = new THREE.Mesh(groundGeo, groundMat);
     groundMesh.receiveShadow = true;
     groundMesh.position.y = -0.01;
     scene.add(groundMesh);
+    groundMeshRef.current = groundMesh;
 
-    const gridCenter = isLight ? '#0284c7' : '#38bdf8';
-    const gridLines = isLight ? '#94a3b8' : '#1e293b';
+    const gridCenter = lightMode ? '#0284c7' : '#38bdf8';
+    const gridLines = lightMode ? '#94a3b8' : '#1e293b';
     const gridHelper = new THREE.GridHelper(120, 120, gridCenter, gridLines);
     gridHelper.position.y = 0;
     scene.add(gridHelper);
+    gridHelperRef.current = gridHelper;
+    currentGridSizeRef.current = 120;
 
-    // 7. Build Obstacles (Safely wrapped)
-    let obsBuilder = null;
-    try {
-      obsBuilder = new Obstacle3DBuilder(scene);
-      obstacleBuilderRef.current = obsBuilder;
-      if (obstacles && Array.isArray(obstacles)) {
-        obstacles.forEach((obs) => {
-          if (obs && obs.enabled !== false) {
-            obsBuilder.buildObstacle(obs);
-          }
-        });
-      }
-    } catch (e) {
-      console.warn('Error building obstacles in modal:', e);
-    }
+    // 7. Builders & Trajectory Group
+    const obsBuilder = new Obstacle3DBuilder(scene);
+    obstacleBuilderRef.current = obsBuilder;
 
-    // 8. Build Crane (Safely wrapped)
-    let craneBuilder = null;
-    try {
-      craneBuilder = new CraneSceneBuilder(scene);
-      craneBuilderRef.current = craneBuilder;
-      if (crane) {
-        craneBuilder.buildCrane(crane, {
-          matLength: matLength || 2.2,
-          matWidth: matWidth || 2.2,
-          loadType: loadConfig?.type || 'box',
-          loadDims: loadConfig?.dims || { l: 4.0, w: 2.4, h: 2.6 },
-          slingAngleDeg: riggingConfig?.slingAngleDeg || 60,
-          slingType: riggingConfig?.slingType || 'wire_rope',
-          slingLegs: riggingConfig?.slingLegs !== undefined ? riggingConfig.slingLegs : 4
-        });
-        craneBuilder.updateKinematics({
-          slewAngleDeg: slewAngle || 0,
-          boomAngleDeg: boomAngle || 60,
-          boomLength: boomLength || 23,
-          minBoomLength: crane?.specs?.minBoomLength || 10,
-          maxBoomLength: crane?.specs?.maxBoomLength || 40,
-          hookElevation: hookElevation !== undefined ? hookElevation : 6,
-          loadElevation: loadElevation !== undefined ? loadElevation : 1.5,
-          outriggerReactions: outriggerReactions || {},
-          soilCapacityTonsPerM2: soilCapacityTonsPerM2 || 25,
-          matArea: (matLength || 2.2) * (matWidth || 2.2)
-        });
-      }
-    } catch (e) {
-      console.warn('Error building crane in modal:', e);
-    }
+    const craneBuilder = new CraneSceneBuilder(scene);
+    craneBuilderRef.current = craneBuilder;
 
-    // 9. Set initial camera preset smoothly
-    setCameraPreset(defaultPreset);
+    const trajGroup = new THREE.Group();
+    scene.add(trajGroup);
+    trajectoryGroupRef.current = trajGroup;
 
-    // 10. Animation render loop
+    // 8. Animation render loop
     const animate = () => {
       animFrameRef.current = requestAnimationFrame(animate);
       if (controlsRef.current) controlsRef.current.update();
@@ -250,7 +256,7 @@ export default function Report3DAdjustModal({
     };
     animate();
 
-    // 11. Handle Resizing with ResizeObserver for perfect dimension tracking
+    // 9. Handle Resizing with ResizeObserver for perfect dimension tracking
     const updateSize = () => {
       if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
       const w = containerRef.current.clientWidth;
@@ -271,7 +277,6 @@ export default function Report3DAdjustModal({
     }
     window.addEventListener('resize', updateSize);
 
-    // Initial frame resize check after layout mounts
     setTimeout(updateSize, 50);
 
     return () => {
@@ -293,6 +298,9 @@ export default function Report3DAdjustModal({
           craneBuilder.dispose();
         } catch (e) {}
       }
+      if (trajGroup) {
+        scene.remove(trajGroup);
+      }
       if (rendererRef.current) {
         try {
           if (rendererRef.current.domElement && rendererRef.current.domElement.parentNode) {
@@ -302,7 +310,321 @@ export default function Report3DAdjustModal({
         } catch (e) {}
       }
     };
-  }, [isOpen, modalTheme]);
+  }, [isOpen]);
+
+  // Build Crane & Sync Kinematics (including craneHeading & loadRotation)
+  useEffect(() => {
+    if (!isOpen || !craneBuilderRef.current || !crane) return;
+    try {
+      craneBuilderRef.current.buildCrane(crane, {
+        matLength: matLength || 2.2,
+        matWidth: matWidth || 2.2,
+        loadType: loadConfig?.type || 'box',
+        loadDims: loadConfig?.dims || { l: 4.0, w: 2.4, h: 2.6 },
+        slingAngleDeg: riggingConfig?.slingAngleDeg || 60,
+        slingType: riggingConfig?.slingType || 'wire_rope',
+        slingLegs: riggingConfig?.slingLegs !== undefined ? riggingConfig.slingLegs : 4
+      });
+      craneBuilderRef.current.updateKinematics({
+        craneHeading: craneHeading || 0,
+        slewAngleDeg: slewAngle || 0,
+        boomAngleDeg: boomAngle || 60,
+        boomLength: boomLength || 23,
+        minBoomLength: crane?.specs?.minBoomLength || 10,
+        maxBoomLength: crane?.specs?.maxBoomLength || 40,
+        hookElevation: hookElevation !== undefined ? hookElevation : 6,
+        loadElevation: loadElevation !== undefined ? loadElevation : 1.5,
+        loadRotationDeg: loadRotation,
+        outriggerReactions: outriggerReactions || {},
+        soilCapacityTonsPerM2: soilCapacityTonsPerM2 || 25,
+        matArea: (matLength || 2.2) * (matWidth || 2.2)
+      });
+    } catch (e) {
+      console.warn('Error syncing crane in Report3DAdjustModal:', e);
+    }
+  }, [
+    isOpen,
+    crane,
+    matLength,
+    matWidth,
+    loadConfig,
+    riggingConfig,
+    craneHeading,
+    slewAngle,
+    boomAngle,
+    boomLength,
+    hookElevation,
+    loadElevation,
+    loadRotation,
+    outriggerReactions,
+    soilCapacityTonsPerM2
+  ]);
+
+  // Build Obstacles in Modal
+  useEffect(() => {
+    if (!isOpen || !obstacleBuilderRef.current) return;
+    try {
+      obstacleBuilderRef.current.clear();
+      if (obstacles && Array.isArray(obstacles)) {
+        obstacles.forEach((obs) => {
+          if (obs && obs.enabled !== false) {
+            obstacleBuilderRef.current.buildObstacle(obs);
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Error building obstacles in modal:', e);
+    }
+  }, [isOpen, obstacles]);
+
+  // Build Multi-Waypoint Trajectory Curve & Point Markers (Pick / Waypoints / Set)
+  useEffect(() => {
+    if (!isOpen || !trajectoryGroupRef.current || !sceneRef.current) return;
+    const group = trajectoryGroupRef.current;
+
+    while (group.children.length > 0) {
+      const child = group.children[0];
+      group.remove(child);
+      if (child.geometry) child.geometry.dispose();
+    }
+
+    const points = Array.isArray(liftPoints) ? liftPoints : [];
+    if (points.length === 0) return;
+
+    const loadH = loadConfig?.dims?.h || 2.6;
+    const loadCenterOffsetY = loadH * 0.5;
+
+    const getPointWorldPos = (r, sDeg, elev) => {
+      const sRad = (((sDeg || 0) + (craneHeading || 0)) * Math.PI) / 180;
+      return new THREE.Vector3(
+        r * Math.cos(sRad),
+        (elev !== undefined ? elev : 1.5) + loadCenterOffsetY,
+        r * Math.sin(sRad)
+      );
+    };
+
+    if (points.length >= 2) {
+      const path3DPoints = [];
+      const groundTrackPoints = [];
+      const stepsPerSegment = 24;
+
+      for (let i = 0; i < points.length - 1; i++) {
+        const pA = points[i];
+        const pB = points[i + 1];
+
+        let slewDiff = (pB.slew || 0) - (pA.slew || 0);
+        if (slewDiff > 180) slewDiff -= 360;
+        if (slewDiff < -180) slewDiff += 360;
+
+        for (let s = 0; s <= stepsPerSegment; s++) {
+          if (i > 0 && s === 0) continue;
+
+          const t = s / stepsPerSegment;
+          const easeT = 0.5 - 0.5 * Math.cos(t * Math.PI);
+
+          const r = (pA.radius || 0) + ((pB.radius || 0) - (pA.radius || 0)) * easeT;
+          const slew = ((pA.slew || 0) + slewDiff * easeT + 360) % 360;
+          const elev = (pA.elevation ?? 1.5) + ((pB.elevation ?? 1.5) - (pA.elevation ?? 1.5)) * easeT;
+
+          const pos3D = getPointWorldPos(r, slew, elev);
+          path3DPoints.push(pos3D);
+          groundTrackPoints.push(new THREE.Vector3(pos3D.x, 0.05, pos3D.z));
+        }
+      }
+
+      if (path3DPoints.length >= 2) {
+        try {
+          const curve = new THREE.CatmullRomCurve3(path3DPoints, false, 'catmullrom', 0.1);
+          const tubeGeo = new THREE.TubeGeometry(curve, 128, 0.08, 8, false);
+          const tubeMat = new THREE.MeshStandardMaterial({
+            color: '#38bdf8',
+            emissive: '#0284c7',
+            emissiveIntensity: 0.65,
+            roughness: 0.3,
+            metalness: 0.4,
+            transparent: true,
+            opacity: 0.85
+          });
+          const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+          group.add(tubeMesh);
+        } catch (err) {
+          console.warn('TubeGeometry fallback in modal:', err);
+        }
+
+        const pathGeo = new THREE.BufferGeometry().setFromPoints(path3DPoints);
+        const pathMat = new THREE.LineBasicMaterial({
+          color: '#ffffff',
+          transparent: true,
+          opacity: 0.85
+        });
+        const pathLine = new THREE.Line(pathGeo, pathMat);
+        group.add(pathLine);
+
+        const groundGeo = new THREE.BufferGeometry().setFromPoints(groundTrackPoints);
+        const groundMat = new THREE.LineDashedMaterial({
+          color: '#0284c7',
+          dashSize: 0.5,
+          gapSize: 0.3,
+          transparent: true,
+          opacity: 0.7
+        });
+        const groundLine = new THREE.Line(groundGeo, groundMat);
+        groundLine.computeLineDistances();
+        group.add(groundLine);
+      }
+    }
+
+    // Waypoint Pin Markers, Halos, Plumb Drop Lines, Ground Footprints
+    points.forEach((pt, idx) => {
+      const pos = getPointWorldPos(pt.radius || 0, pt.slew || 0, pt.elevation);
+      const isStart = idx === 0;
+      const isEnd = idx === points.length - 1;
+      const color = isStart ? '#10b981' : isEnd && points.length > 1 ? '#ef4444' : '#f59e0b';
+
+      const sphereGeo = new THREE.SphereGeometry(0.4, 20, 20);
+      const sphereMat = new THREE.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.85,
+        roughness: 0.2
+      });
+      const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+      sphere.position.copy(pos);
+      group.add(sphere);
+
+      const haloGeo = new THREE.RingGeometry(0.6, 0.72, 32);
+      haloGeo.rotateX(-Math.PI / 2);
+      const haloMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
+      const halo = new THREE.Mesh(haloGeo, haloMat);
+      halo.position.copy(pos);
+      group.add(halo);
+
+      const dropGeo = new THREE.BufferGeometry().setFromPoints([
+        pos,
+        new THREE.Vector3(pos.x, 0.05, pos.z)
+      ]);
+      const dropLine = new THREE.Line(
+        dropGeo,
+        new THREE.LineDashedMaterial({
+          color,
+          dashSize: 0.4,
+          gapSize: 0.3,
+          transparent: true,
+          opacity: 0.7
+        })
+      );
+      dropLine.computeLineDistances();
+      group.add(dropLine);
+
+      const ringGeo = new THREE.RingGeometry(0.5, 0.7, 32);
+      ringGeo.rotateX(-Math.PI / 2);
+      const ringMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.set(pos.x, 0.06, pos.z);
+      group.add(ring);
+
+      const dotGeo = new THREE.CircleGeometry(0.2, 16);
+      dotGeo.rotateX(-Math.PI / 2);
+      const dot = new THREE.Mesh(dotGeo, ringMat);
+      dot.position.set(pos.x, 0.065, pos.z);
+      group.add(dot);
+    });
+  }, [isOpen, liftPoints, loadConfig?.dims?.h, craneHeading]);
+
+  // Dynamic Ground & Grid sizing + Theme color sync without resetting camera angle
+  useEffect(() => {
+    if (!isOpen || !sceneRef.current || !groundMeshRef.current || !gridHelperRef.current) return;
+    const scene = sceneRef.current;
+
+    let maxDist = 55;
+    if (workingRadius) maxDist = Math.max(maxDist, workingRadius + 15);
+    if (boomLength) maxDist = Math.max(maxDist, boomLength + 15);
+    if (Array.isArray(liftPoints)) {
+      liftPoints.forEach((pt) => {
+        if (pt?.radius) maxDist = Math.max(maxDist, pt.radius + 15);
+      });
+    }
+    if (Array.isArray(obstacles)) {
+      obstacles.forEach((obs) => {
+        if (obs?.enabled === false) return;
+        if (obs.type === 'wall' && Array.isArray(obs.boundaryPoints)) {
+          obs.boundaryPoints.forEach((p) => {
+            const d = Math.hypot(p.x, p.z) + 12;
+            if (d > maxDist) maxDist = d;
+          });
+        } else {
+          const halfDim =
+            Math.max(obs.width || 0, obs.length || 0, obs.diameter || 0, obs.wireSpan || 0) * 0.5;
+          const d = Math.hypot(obs.posX || 0, obs.posZ || 0) + halfDim + 12;
+          if (d > maxDist) maxDist = d;
+        }
+      });
+    }
+
+    const requiredGridSize = Math.max(120, Math.ceil((maxDist * 2) / 20) * 20);
+    currentGridSizeRef.current = requiredGridSize;
+    const divisions = requiredGridSize <= 200 ? requiredGridSize : Math.round(requiredGridSize / 2);
+    const groundSize = Math.max(requiredGridSize * 1.6, 250);
+
+    // Update theme colors in-place
+    scene.background = new THREE.Color(isLight ? '#f0f4f8' : '#0b1120');
+    if (scene.fog) {
+      scene.fog.color.set(isLight ? '#f0f4f8' : '#0b1120');
+      const baseDensity = isLight ? 0.005 : 0.008;
+      scene.fog.density = Math.max(0.0015, baseDensity * (120 / requiredGridSize));
+    }
+
+    if (hemiLightRef.current) {
+      hemiLightRef.current.color.set(isLight ? '#ffffff' : '#bae6fd');
+      hemiLightRef.current.groundColor.set(isLight ? '#94a3b8' : '#334155');
+      hemiLightRef.current.intensity = isLight ? 1.15 : 1.0;
+    }
+    if (dirLightRef.current) {
+      dirLightRef.current.color.set(isLight ? '#fffbeb' : '#ffffff');
+      dirLightRef.current.intensity = isLight ? 2.3 : 2.0;
+    }
+    if (fillLightRef.current) {
+      fillLightRef.current.color.set(isLight ? '#93c5fd' : '#38bdf8');
+      fillLightRef.current.intensity = isLight ? 0.6 : 0.8;
+    }
+
+    if (groundMeshRef.current) {
+      groundMeshRef.current.geometry.dispose();
+      const newGeo = new THREE.PlaneGeometry(groundSize, groundSize);
+      newGeo.rotateX(-Math.PI / 2);
+      groundMeshRef.current.geometry = newGeo;
+      groundMeshRef.current.material.color.set(isLight ? '#cbd5e1' : '#0f172a');
+      groundMeshRef.current.material.roughness = isLight ? 0.85 : 0.9;
+    }
+
+    scene.remove(gridHelperRef.current);
+    gridHelperRef.current.geometry.dispose();
+    if (Array.isArray(gridHelperRef.current.material)) {
+      gridHelperRef.current.material.forEach((m) => m.dispose());
+    } else {
+      gridHelperRef.current.material.dispose();
+    }
+    const gridCenter = isLight ? '#0284c7' : '#38bdf8';
+    const gridLines = isLight ? '#94a3b8' : '#1e293b';
+    const newGrid = new THREE.GridHelper(requiredGridSize, divisions, gridCenter, gridLines);
+    newGrid.position.y = 0;
+    scene.add(newGrid);
+    gridHelperRef.current = newGrid;
+
+    if (controlsRef.current) {
+      controlsRef.current.maxDistance = Math.max(250, groundSize * 1.2);
+    }
+    if (cameraRef.current) {
+      cameraRef.current.far = Math.max(600, groundSize * 2.5);
+      cameraRef.current.updateProjectionMatrix();
+    }
+  }, [isOpen, modalTheme, isLight, obstacles, boomLength, workingRadius, liftPoints]);
+
+  // Apply initial camera preset when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    setCameraPreset(defaultPreset);
+  }, [isOpen, defaultPreset]);
 
   const handleCaptureAndSave = () => {
     if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;

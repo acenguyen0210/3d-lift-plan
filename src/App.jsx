@@ -221,7 +221,7 @@ export default function App() {
   const handleStartAdjustView = (viewKey, viewName, defaultPreset) => {
     setIsReportOpen(false);
     setAdjustingViewConfig({ key: viewKey, name: viewName, defaultPreset });
-    if (viewportRef.current && viewportRef.current.setPreset && defaultPreset) {
+    if (viewportRef.current && viewportRef.current.setPreset && defaultPreset && defaultPreset !== 'current') {
       viewportRef.current.setPreset(defaultPreset);
     }
   };
@@ -812,71 +812,75 @@ export default function App() {
         >
           {/* Floating Camera Framing Banner when adjusting report view angles */}
           {adjustingViewConfig && (
-            <div className="absolute top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-950/95 border-2 border-amber-400 text-slate-100 px-5 py-3 rounded-2xl shadow-2xl flex flex-col md:flex-row items-center gap-4 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto max-w-[95%]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center shrink-0">
-                  <Camera size={16} className="text-amber-400 animate-pulse" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5 flex-wrap">
-                    <span>ĐANG CHỈNH GÓC BẰNG CHUỘT:</span>
-                    <span className="text-white underline">{adjustingViewConfig.name}</span>
+            <div className="absolute top-3 inset-x-3 z-50 flex justify-center pointer-events-none">
+              <div className="bg-slate-950/95 border-2 border-amber-400 text-slate-100 px-3.5 py-2 rounded-2xl shadow-2xl flex flex-wrap items-center justify-center gap-x-4 gap-y-2 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto max-w-full">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center shrink-0">
+                    <Camera size={14} className="text-amber-400 animate-pulse" />
                   </div>
-                  <div className="text-[11px] text-slate-300 font-sans">
-                    Chuột trái: <b>Xoay</b> | Chuột phải: <b>Kéo</b> | Con lăn: <b>Zoom phóng to/thu nhỏ</b>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5 flex-wrap">
+                      <span className="whitespace-nowrap">ĐANG CHỈNH GÓC BẰNG CHUỘT:</span>
+                      <span className="text-white underline truncate max-w-[240px] sm:max-w-[340px]" title={adjustingViewConfig.name}>
+                        {adjustingViewConfig.name}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-300 font-sans whitespace-nowrap">
+                      Chuột trái: <b>Xoay</b> | Chuột phải: <b>Kéo</b> | Con lăn: <b>Zoom</b>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Quick Angle Presets */}
-              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-[11px] shrink-0">
-                <span className="text-[10px] text-slate-500 px-1 font-mono shrink-0">Góc mẫu:</span>
-                <button
-                  type="button"
-                  onClick={() => viewportRef.current?.setPreset('top')}
-                  className="px-2 py-0.5 rounded hover:bg-slate-800 text-sky-300 font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                >
-                  Mặt bằng
-                </button>
-                <button
-                  type="button"
-                  onClick={() => viewportRef.current?.setPreset('3d')}
-                  className="px-2 py-0.5 rounded hover:bg-slate-800 text-emerald-300 font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                >
-                  3D Phối cảnh
-                </button>
-                <button
-                  type="button"
-                  onClick={() => viewportRef.current?.setPreset('side')}
-                  className="px-2 py-0.5 rounded hover:bg-slate-800 text-amber-300 font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                >
-                  Mặt đứng
-                </button>
-                <button
-                  type="button"
-                  onClick={() => viewportRef.current?.setPreset('load')}
-                  className="px-2 py-0.5 rounded hover:bg-slate-800 text-purple-300 font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                >
-                  Tải cẩu
-                </button>
-              </div>
+                {/* Quick Angle Presets */}
+                <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-[11px] shrink-0">
+                  <span className="text-[10px] text-slate-500 px-1 font-mono shrink-0">Góc mẫu:</span>
+                  <button
+                    type="button"
+                    onClick={() => viewportRef.current?.setPreset('top')}
+                    className="px-2 py-0.5 rounded hover:bg-slate-800 text-sky-300 font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    Mặt bằng
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => viewportRef.current?.setPreset('3d')}
+                    className="px-2 py-0.5 rounded hover:bg-slate-800 text-emerald-300 font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    3D Phối cảnh
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => viewportRef.current?.setPreset('side')}
+                    className="px-2 py-0.5 rounded hover:bg-slate-800 text-amber-300 font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    Mặt đứng
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => viewportRef.current?.setPreset('load')}
+                    className="px-2 py-0.5 rounded hover:bg-slate-800 text-purple-300 font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    Tải cẩu
+                  </button>
+                </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleConfirmAdjustView}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg shadow-lg shadow-emerald-600/30 flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 cursor-pointer"
-                >
-                  <CheckCircle size={14} className="shrink-0" /> Chụp & Lưu góc này
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancelAdjustView}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                >
-                  Hủy / Quay lại
-                </button>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleConfirmAdjustView}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-lg shadow-emerald-600/30 flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    <CheckCircle size={14} className="shrink-0" /> Chụp & Lưu góc này
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelAdjustView}
+                    className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    Hủy / Quay lại
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1203,6 +1207,7 @@ export default function App() {
         partsOfLine={partsOfLine}
         hookElevation={hookElevation}
         loadElevation={loadElevation}
+        loadRotation={loadRotation}
         grossLoad={grossLoad}
         netLoad={loadConfig.netWeight}
         totalRiggingWeight={totalRiggingWeight}

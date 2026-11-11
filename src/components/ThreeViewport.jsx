@@ -1482,10 +1482,12 @@ export default function ThreeViewport({
 
   // Camera Presets
   const setCameraPreset = (view) => {
+    if (view === 'current') return;
     if (!cameraRef.current || !controlsRef.current) return;
     const cam = cameraRef.current;
     const ctrl = controlsRef.current;
     setActiveCameraView(view);
+    cam.up.set(0, 1, 0);
 
     switch (view) {
       case 'top':
@@ -1497,7 +1499,11 @@ export default function ThreeViewport({
         cam.position.set(0, 12, 45);
         ctrl.target.set(0, 8, 0);
         break;
-      case 'cab':
+      case 'front':
+        cam.position.set(45, 12, 0.1);
+        ctrl.target.set(0, 8, 0);
+        break;
+      case 'cab': {
         // Inside crane operator cab, oriented with crane heading
         const cabAngleRad = (-(craneHeading || 0) * Math.PI) / 180;
         const cabLocalX = 1.5;
@@ -1508,6 +1514,7 @@ export default function ThreeViewport({
         const boomTipAngleRad = (((slewAngle || 0) + (craneHeading || 0)) * Math.PI) / 180;
         ctrl.target.set(workingRadius * 0.8 * Math.cos(boomTipAngleRad), hookElevation, workingRadius * 0.8 * Math.sin(boomTipAngleRad));
         break;
+      }
       case 'load':
         // Close-up on the lifted load and rigging assembly
         if (craneBuilderRef.current?.loadGroup) {
@@ -1518,8 +1525,11 @@ export default function ThreeViewport({
           cam.position.set(lp.x + camOffsetX, lp.y + 3.0, lp.z + camOffsetZ);
           ctrl.target.set(lp.x, lp.y + 1.2, lp.z);
         } else {
-          cam.position.set(workingRadius + 6, loadElevation + 3, 6);
-          ctrl.target.set(workingRadius, loadElevation, 0);
+          const totalRad = (((craneHeading || 0) + (slewAngle || 0)) * Math.PI) / 180;
+          const lx = workingRadius * Math.cos(totalRad);
+          const lz = workingRadius * Math.sin(totalRad);
+          cam.position.set(lx + 6, loadElevation + 3, lz + 6);
+          ctrl.target.set(lx, loadElevation, lz);
         }
         break;
       case '3d':
@@ -1531,12 +1541,15 @@ export default function ThreeViewport({
     ctrl.update();
   };
 
+  const setCameraPresetRef = useRef(null);
+  setCameraPresetRef.current = setCameraPreset;
+
   // Viewport Capture Handle for Engineering Reports (Multi-view screenshots)
   useEffect(() => {
     if (captureRef) {
       captureRef.current = {
         setPreset: (view) => {
-          setCameraPreset(view);
+          setCameraPresetRef.current?.(view);
         },
         captureCurrentView: () => {
           if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return null;
@@ -1615,7 +1628,7 @@ export default function ThreeViewport({
         }
       };
     }
-  }, [boomLength, loadElevation, captureRef]);
+  }, [boomLength, loadElevation, workingRadius, slewAngle, craneHeading, hookElevation, captureRef]);
 
   return (
     <div

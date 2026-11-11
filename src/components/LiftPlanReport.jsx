@@ -80,6 +80,7 @@ export default function LiftPlanReport({
   partsOfLine,
   hookElevation = 6.0,
   loadElevation = 1.5,
+  loadRotation = 0,
   grossLoad,
   netLoad,
   totalRiggingWeight,
@@ -101,8 +102,6 @@ export default function LiftPlanReport({
   onStartAdjustView,
   onUpdateViewImage
 }) {
-  if (!isOpen) return null;
-
   // Theme selector: 'light' (Standard A4 Paper) vs 'dark' (Engineering CAD)
   // Matches 100% between screen preview and PDF print output
   const [reportTheme, setReportTheme] = useState('light');
@@ -247,6 +246,7 @@ export default function LiftPlanReport({
 
   // --- DETAILED EVALUATION AT ALL WAYPOINTS (PICK -> WAYPOINTS -> SET) ---
   const evaluatedPoints = useMemo(() => {
+    if (!isOpen || !crane) return [];
     const rawPts =
       liftPoints && liftPoints.length > 0
         ? liftPoints
@@ -332,6 +332,7 @@ export default function LiftPlanReport({
       };
     });
   }, [
+    isOpen,
     liftPoints,
     workingRadius,
     slewAngle,
@@ -364,6 +365,8 @@ export default function LiftPlanReport({
     });
     return worst;
   }, [evaluatedPoints]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto report-modal-backdrop">
@@ -1200,7 +1203,7 @@ export default function LiftPlanReport({
                         title="Dùng chuột xoay, zoom, kéo để căn chỉnh lại góc nhìn trong không gian 3D"
                       >
                         <Move size={11} />
-                        <span className="hidden xs:inline">Chỉnh góc</span>
+                        <span className="hidden sm:inline">Chỉnh góc</span>
                       </button>
 
                       <label
@@ -1384,9 +1387,11 @@ export default function LiftPlanReport({
           boomLength={boomLength}
           workingRadius={workingRadius}
           slewAngle={slewAngle}
+          craneHeading={craneHeading}
           boomAngle={boomAngle}
           hookElevation={hookElevation}
           loadElevation={loadElevation}
+          loadRotation={loadRotation}
           loadConfig={loadConfig}
           riggingConfig={riggingConfig}
           outriggerReactions={outriggerReactions}
@@ -1394,6 +1399,7 @@ export default function LiftPlanReport({
           matLength={matLength}
           matWidth={matWidth}
           obstacles={obstacles}
+          liftPoints={liftPoints}
           onSaveView={(key, dataUrl) => {
             setCustomImages((prev) => ({ ...prev, [key]: dataUrl }));
             if (onUpdateViewImage) {
