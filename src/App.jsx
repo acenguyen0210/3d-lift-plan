@@ -69,36 +69,36 @@ export default function App() {
     return DEFAULT_CRANES;
   });
 
-  const [selectedCrane, setSelectedCrane] = useState(cranes[0]);
+  const [selectedCrane, setSelectedCrane] = useState(() => cranes.find((c) => c.id === 'custom-1793762561954') || cranes[0]);
   const [activeTab, setActiveTab] = useState('crane'); // 'crane', 'load', 'mat', 'obstacle', 'dual_point'
   const [mobileViewMode, setMobileViewMode] = useState('split'); // '3d', 'split', 'panel'
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Crane Kinematics & Config
-  const [boomLength, setBoomLength] = useState(23.0);
-  const [workingRadius, setWorkingRadius] = useState(8.0);
-  const [slewAngle, setSlewAngle] = useState(25);
-  const [craneHeading, setCraneHeading] = useState(0); // 0 to 360 deg (Hướng đỗ xe cẩu trên công trường)
-  const [counterweight, setCounterweight] = useState(selectedCrane.specs.defaultCounterweight || 9.0);
+  // Crane Kinematics & Config (Mô hình mặc định tải từ phương án công trường)
+  const [boomLength, setBoomLength] = useState(24.0);
+  const [workingRadius, setWorkingRadius] = useState(14.0);
+  const [slewAngle, setSlewAngle] = useState(162);
+  const [craneHeading, setCraneHeading] = useState(90); // 0 to 360 deg (Hướng đỗ xe cẩu trên công trường)
+  const [counterweight, setCounterweight] = useState(0);
   const [outriggerRatio, setOutriggerRatio] = useState(1.0);
   const [partsOfLine, setPartsOfLine] = useState(4);
-  const [hookElevation, setHookElevation] = useState(6.0);
-  const [loadElevation, setLoadElevation] = useState(1.5);
-  const [loadRotation, setLoadRotation] = useState(0); // 0 to 360 deg (Hướng xoay kiện hàng)
+  const [hookElevation, setHookElevation] = useState(5.0);
+  const [loadElevation, setLoadElevation] = useState(0.5);
+  const [loadRotation, setLoadRotation] = useState(55); // 0 to 360 deg (Hướng xoay kiện hàng)
 
   // Load & Rigging
   const [loadConfig, setLoadConfig] = useState({
-    netWeight: 14.5,
-    type: 'tank',
+    netWeight: 1.3,
+    type: 'box',
     dims: { l: 5.5, w: 2.6, h: 2.6 }
   });
 
   const [riggingConfig, setRiggingConfig] = useState({
-    slingType: 'wire_rope',
+    slingType: 'synthetic',
     slingLegs: 4,
     slingAngleDeg: 60,
-    slingWeight: 0.25,
-    spreaderWeight: 0.5
+    slingWeight: 0.1,
+    spreaderWeight: 0
   });
 
   // Outrigger Mat & Soil
@@ -115,8 +115,8 @@ export default function App() {
 
   // Multi-Waypoint Pick & Set Planning
   const [liftPoints, setLiftPoints] = useState(DEFAULT_LIFT_POINTS);
-  const pickPoint = liftPoints[0] || { radius: 8.0, slew: 25, elevation: 1.5, loadRotation: 0 };
-  const setPoint = liftPoints[liftPoints.length - 1] || { radius: 13.5, slew: 155, elevation: 6.5, loadRotation: 90 };
+  const pickPoint = liftPoints[0] || { radius: 13.3, slew: 177, elevation: 0.5, loadRotation: 90 };
+  const setPoint = liftPoints[liftPoints.length - 1] || { radius: 13.1, slew: 120, elevation: 10.9, loadRotation: 0 };
 
   // Mouse Picking for Fence Boundary Points on 3D ground plane
   const [pickingFencePoint, setPickingFencePoint] = useState(null); // { obsId, pointId } or { obsId, mode: 'add' }

@@ -1,6 +1,94 @@
 // Real-world Crane Configurations and Load Charts for 3D Lift Plan
 export const DEFAULT_CRANES = [
   {
+    id: 'custom-1793762561954',
+    name: 'Sany STC500C',
+    manufacturer: 'Sany Heavy Industry (Trung Quốc)',
+    type: 'mobile',
+    description: 'Cẩu bánh lốp 50 tấn, 4 trục, cần chính 11.5m - 43.5m, rất thông dụng tại công trường',
+    specs: {
+      tareWeight: 42.0,
+      hasCounterweight: true,
+      counterweightOptions: [0, 4.3, 8.5],
+      defaultCounterweight: 0,
+      outriggerLength: 7.20,
+      outriggerWidth: 6.40,
+      outriggerSpreads: [
+        { label: '100% (6.40 m)', ratio: 1.0, width: 6.40 },
+        { label: '75% (5.12 m)', ratio: 0.80, width: 5.12 },
+        { label: '50% (3.84 m)', ratio: 0.60, width: 3.84 },
+        { label: '0% / Bánh lốp (2.50 m)', ratio: 0.38, width: 2.50 }
+      ],
+      minBoomLength: 11.5,
+      maxBoomLength: 43.5,
+      boomSteps: [11.5, 17.5, 24.0, 29.5, 35.5, 43.5],
+      boomOffsetPivotY: 2.50,
+      tailSwingRadius: 3.80,
+      maxPartsOfLine: 8,
+      ropeCapacityPerLine: 5.0,
+      defaultHookWeight: 0.45,
+      maxWindSpeed: 11.0,
+      colorScheme: {
+        body: '#f97316', // Cam Sany
+        boom: '#ea580c',
+        cabin: '#0f172a',
+        chassis: '#1e293b'
+      }
+    },
+    loadCharts: {
+      '0t_100%': {
+        radii: [3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32],
+        boomLengths: [11.5, 17.5, 24.0, 29.5, 35.5, 43.5],
+        chart: {
+          3:  [50.0, 36.0, 28.0, null,  null,  null],
+          4:  [44.0, 34.0, 26.0, 21.0, null,  null],
+          5:  [36.0, 30.0, 23.5, 18.0, 14.0, null],
+          6:  [30.0, 26.0, 21.0, 16.5, 12.0, 9.5],
+          7:  [25.0, 22.5, 19.0, 15.0, 11.0, 8.8],
+          8:  [21.0, 20.0, 17.5, 14.0, 10.5, 8.2],
+          9:  [17.5, 17.0, 15.5, 13.0, 9.8,  7.6],
+          10: [14.5, 14.5, 14.0, 12.0, 9.2,  7.0],
+          12: [null, 10.5, 10.2, 10.0, 8.0,  6.2],
+          14: [null, 7.8,  7.6,  7.8,  7.0,  5.5],
+          16: [null, null, 5.8,  6.0,  5.9,  4.8],
+          18: [null, null, 4.4,  4.6,  4.7,  4.2],
+          20: [null, null, null, 3.5,  3.7,  3.6],
+          22: [null, null, null, 2.7,  2.9,  3.0],
+          24: [null, null, null, 2.1,  2.3,  2.5],
+          26: [null, null, null, null, 1.8,  2.0],
+          28: [null, null, null, null, 1.4,  1.6],
+          30: [null, null, null, null, null, 1.2],
+          32: [null, null, null, null, null, 0.8]
+        }
+      },
+      '8.5t_100%': {
+        radii: [3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32],
+        boomLengths: [11.5, 17.5, 24.0, 29.5, 35.5, 43.5],
+        chart: {
+          3:  [50.0, 38.0, 30.0, null,  null,  null],
+          4:  [45.0, 36.0, 28.5, 23.0, null,  null],
+          5:  [38.0, 32.5, 26.0, 20.5, 16.0, null],
+          6:  [32.5, 29.0, 23.5, 18.5, 14.0, 11.0],
+          7:  [27.5, 25.0, 21.0, 17.0, 12.8, 10.2],
+          8:  [23.5, 22.0, 19.5, 15.5, 11.8, 9.5],
+          9:  [20.0, 19.2, 17.5, 14.2, 11.0, 8.8],
+          10: [17.0, 16.8, 15.8, 13.2, 10.2, 8.2],
+          12: [null, 13.0, 12.8, 12.2, 9.2,  7.2],
+          14: [null, 9.8,  9.6,  9.8,  8.4,  6.5],
+          16: [null, null, 7.8,  8.0,  7.6,  5.8],
+          18: [null, null, 6.2,  6.4,  6.5,  5.2],
+          20: [null, null, null, 5.1,  5.2,  4.6],
+          22: [null, null, null, 4.0,  4.2,  4.1],
+          24: [null, null, null, 3.2,  3.4,  3.5],
+          26: [null, null, null, null, 2.7,  2.9],
+          28: [null, null, null, null, 2.2,  2.4],
+          30: [null, null, null, null, null, 1.9],
+          32: [null, null, null, null, null, 1.5]
+        }
+      }
+    }
+  },
+  {
     id: 'liebherr-ltm-1050',
     name: 'Liebherr LTM 1050-3.1',
     manufacturer: 'Liebherr (Đức)',
